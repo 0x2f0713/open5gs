@@ -381,8 +381,7 @@ ogs_pkbuf_t *smf_n4_build_qos_flow_modification_request(
                 i++;
             }
         }
-        if (modify_flags & OGS_PFCP_MODIFY_ACTIVATE
-            || modify_flags & OGS_PFCP_MODIFY_UL_ONLY) {
+        if (modify_flags & OGS_PFCP_MODIFY_ACTIVATE) {
             /* Update FAR - Only DL */
             i = 0;
             if (qos_flow->dl_far) {
