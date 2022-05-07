@@ -30,8 +30,8 @@ ogs_pkbuf_t *smf_n4_build_session_establishment_request(
         uint8_t type, smf_sess_t *sess);
 ogs_pkbuf_t *smf_n4_build_session_modification_request(
         uint8_t type, smf_sess_t *sess, ogs_pfcp_xact_t *xact);
-ogs_pkbuf_t *smf_n4_build_qos_flow_modification_request(
-        uint8_t type, smf_bearer_t *qos_flow, ogs_pfcp_xact_t *xact);
+ogs_pkbuf_t *smf_n4_build_bearer_modification_request(
+        uint8_t type, smf_sess_t *sess, ogs_pfcp_xact_t *xact);
 ogs_pkbuf_t *smf_n4_build_session_deletion_request(
         uint8_t type, smf_sess_t *sess);
 

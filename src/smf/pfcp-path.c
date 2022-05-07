@@ -391,7 +391,10 @@ int smf_5gc_pfcp_send_qos_flow_modification_request(smf_bearer_t *qos_flow,
     xact->assoc_stream = stream;
     xact->modify_flags = flags;
 
-    n4buf = smf_n4_build_qos_flow_modification_request(h.type, qos_flow, xact);
+    ogs_list_init(&sess->bearer_to_modify_list);
+    ogs_list_add(&sess->bearer_to_modify_list, &qos_flow->to_modify_node);
+
+    n4buf = smf_n4_build_bearer_modification_request(h.type, sess, xact);
     ogs_expect_or_return_val(n4buf, OGS_ERROR);
 
     rv = ogs_pfcp_xact_update_tx(xact, &h, n4buf);
@@ -534,7 +537,10 @@ int smf_epc_pfcp_send_bearer_modification_request(
     xact->gtp_pti = gtp_pti;
     xact->gtp_cause = gtp_cause;
 
-    n4buf = smf_n4_build_qos_flow_modification_request(h.type, bearer, xact);
+    ogs_list_init(&sess->bearer_to_modify_list);
+    ogs_list_add(&sess->bearer_to_modify_list, &bearer->to_modify_node);
+
+    n4buf = smf_n4_build_bearer_modification_request(h.type, sess, xact);
     ogs_expect_or_return_val(n4buf, OGS_ERROR);
 
     rv = ogs_pfcp_xact_update_tx(xact, &h, n4buf);
