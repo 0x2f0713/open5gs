@@ -164,7 +164,7 @@ ED3(uint8_t spare:2;,
 typedef struct smf_bearer_s {
     ogs_lnode_t     lnode;          /**< A node of list_t */
 
-    ogs_lnode_t     to_update_node;
+    ogs_lnode_t     to_modify_node;
     ogs_lnode_t     to_delete_node;
 
     uint32_t        index;
