@@ -212,10 +212,6 @@ int sgwc_pfcp_send_session_establishment_request(
 
     ogs_assert(sess);
 
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_SESSION_ESTABLISHMENT_REQUEST_TYPE;
-    h.seid = sess->sgwu_sxa_seid;
-
     xact = ogs_pfcp_xact_local_create(sess->pfcp_node, sess_timeout, sess);
     ogs_expect_or_return_val(xact, OGS_ERROR);
 
@@ -224,6 +220,10 @@ int sgwc_pfcp_send_session_establishment_request(
         xact->gtpbuf = ogs_pkbuf_copy(gtpbuf);
         ogs_expect_or_return_val(xact->gtpbuf, OGS_ERROR);
     }
+
+    memset(&h, 0, sizeof(ogs_pfcp_header_t));
+    h.type = OGS_PFCP_SESSION_ESTABLISHMENT_REQUEST_TYPE;
+    h.seid = sess->sgwu_sxa_seid;
 
     sxabuf = sgwc_sxa_build_session_establishment_request(h.type, sess);
     ogs_expect_or_return_val(sxabuf, OGS_ERROR);
@@ -355,10 +355,6 @@ int sgwc_pfcp_send_session_deletion_request(
 
     ogs_assert(sess);
 
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_SESSION_DELETION_REQUEST_TYPE;
-    h.seid = sess->sgwu_sxa_seid;
-
     xact = ogs_pfcp_xact_local_create(sess->pfcp_node, sess_timeout, sess);
     ogs_expect_or_return_val(xact, OGS_ERROR);
 
@@ -367,6 +363,10 @@ int sgwc_pfcp_send_session_deletion_request(
         xact->gtpbuf = ogs_pkbuf_copy(gtpbuf);
         ogs_expect_or_return_val(xact->gtpbuf, OGS_ERROR);
     }
+
+    memset(&h, 0, sizeof(ogs_pfcp_header_t));
+    h.type = OGS_PFCP_SESSION_DELETION_REQUEST_TYPE;
+    h.seid = sess->sgwu_sxa_seid;
 
     sxabuf = sgwc_sxa_build_session_deletion_request(h.type, sess);
     ogs_expect_or_return_val(sxabuf, OGS_ERROR);
