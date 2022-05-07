@@ -1078,7 +1078,7 @@ void sgwc_s11_handle_release_access_bearers_request(
     ogs_list_for_each(&sgwc_ue->sess_list, sess) {
 
         ogs_assert(OGS_OK ==
-            sgwc_pfcp_send_sess_modification_request(
+            sgwc_pfcp_send_session_modification_request(
                 sess, s11_xact, gtpbuf,
                 OGS_PFCP_MODIFY_DL_ONLY|OGS_PFCP_MODIFY_DEACTIVATE));
     }
@@ -1270,7 +1270,7 @@ void sgwc_s11_handle_create_indirect_data_forwarding_tunnel_request(
     ogs_list_for_each(&sgwc_ue->sess_list, sess) {
 
         ogs_assert(OGS_OK ==
-            sgwc_pfcp_send_sess_modification_request(
+            sgwc_pfcp_send_session_modification_request(
                 sess, s11_xact, gtpbuf,
                 OGS_PFCP_MODIFY_INDIRECT|OGS_PFCP_MODIFY_CREATE));
     }
@@ -1316,7 +1316,7 @@ void sgwc_s11_handle_delete_indirect_data_forwarding_tunnel_request(
     ogs_list_for_each(&sgwc_ue->sess_list, sess) {
 
         ogs_assert(OGS_OK ==
-            sgwc_pfcp_send_sess_modification_request(
+            sgwc_pfcp_send_session_modification_request(
                 sess, s11_xact, gtpbuf,
                 OGS_PFCP_MODIFY_INDIRECT| OGS_PFCP_MODIFY_REMOVE));
     }

@@ -1381,7 +1381,7 @@ void sgwc_sxa_handle_session_report_request(
         ogs_list_for_each(&sgwc_ue->sess_list, sess) {
 
             ogs_assert(OGS_OK ==
-                sgwc_pfcp_send_sess_modification_request(sess,
+                sgwc_pfcp_send_session_modification_request(sess,
                 /* We only use the `assoc_xact` parameter temporarily here
                  * to pass the `bearer` context. */
                     (ogs_gtp_xact_t *)bearer,

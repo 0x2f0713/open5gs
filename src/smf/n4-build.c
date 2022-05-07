@@ -110,7 +110,7 @@ ogs_pkbuf_t *smf_n4_build_session_establishment_request(
     return pkbuf;
 }
 
-ogs_pkbuf_t *smf_n4_build_session_modification_request(
+ogs_pkbuf_t *smf_n4_build_pdr_to_modify_list(
         uint8_t type, smf_sess_t *sess, ogs_pfcp_xact_t *xact)
 {
     ogs_pfcp_pdr_t *pdr = NULL;
@@ -238,7 +238,7 @@ ogs_pkbuf_t *smf_n4_build_session_modification_request(
     return pkbuf;
 }
 
-ogs_pkbuf_t *smf_n4_build_bearer_modification_request(
+ogs_pkbuf_t *smf_n4_build_qos_flow_to_modify_list(
         uint8_t type, smf_sess_t *sess, ogs_pfcp_xact_t *xact)
 {
     ogs_pfcp_message_t pfcp_message;
@@ -278,7 +278,7 @@ ogs_pkbuf_t *smf_n4_build_bearer_modification_request(
     }
 
     ogs_list_for_each_entry(
-            &sess->bearer_to_modify_list, qos_flow, to_modify_node) {
+            &sess->qos_flow_to_modify_list, qos_flow, to_modify_node) {
 
         if (modify_flags & OGS_PFCP_MODIFY_REMOVE) {
             /* Remove PDR */

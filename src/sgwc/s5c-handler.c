@@ -262,7 +262,7 @@ void sgwc_s5c_handle_create_session_response(
     sess->pgw_s5c_teid = be32toh(pgw_s5c_teid->teid);
 
     ogs_assert(OGS_OK ==
-        sgwc_pfcp_send_sess_modification_request(
+        sgwc_pfcp_send_session_modification_request(
             sess, s11_xact, gtpbuf,
             OGS_PFCP_MODIFY_UL_ONLY|OGS_PFCP_MODIFY_ACTIVATE));
 }

@@ -105,7 +105,7 @@ ogs_pkbuf_t *sgwc_sxa_build_session_establishment_request(
     return pkbuf;
 }
 
-ogs_pkbuf_t *sgwc_sxa_build_session_modification_request(
+ogs_pkbuf_t *sgwc_sxa_build_bearer_to_modify_list(
         uint8_t type, sgwc_sess_t *sess, ogs_pfcp_xact_t *xact)
 {
     ogs_pfcp_message_t pfcp_message;

@@ -34,8 +34,9 @@ int smf_5gc_pfcp_send_session_establishment_request(
 int smf_5gc_pfcp_send_session_modification_request(
         smf_sess_t *sess, ogs_sbi_stream_t *stream,
         uint64_t flags, ogs_time_t duration);
-int smf_5gc_pfcp_send_qos_flow_modification_request(smf_bearer_t *qos_flow,
-        ogs_sbi_stream_t *stream, uint64_t flags);
+int smf_5gc_pfcp_send_qos_flow_modification_request(
+        smf_bearer_t *qos_flow, ogs_sbi_stream_t *stream,
+        uint64_t flags);
 int smf_5gc_pfcp_send_session_deletion_request(
         smf_sess_t *sess, ogs_sbi_stream_t *stream, int trigger);
 

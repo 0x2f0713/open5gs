@@ -386,7 +386,7 @@ typedef struct smf_sess_s {
     ogs_list_t      bearer_list;
 
     ogs_list_t      pdr_to_modify_list;
-    ogs_list_t      bearer_to_modify_list;
+    ogs_list_t      qos_flow_to_modify_list;
 
     ogs_gtp_node_t  *gnode;
     ogs_pfcp_node_t *pfcp_node;
