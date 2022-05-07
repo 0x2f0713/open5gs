@@ -334,6 +334,7 @@ int smf_5gc_pfcp_send_session_modification_request(
     ogs_pkbuf_t *n4buf = NULL;
     ogs_pfcp_header_t h;
     ogs_pfcp_xact_t *xact = NULL;
+    ogs_pfcp_pdr_t *pdr = NULL;
 
     ogs_assert(sess);
     if ((flags & OGS_PFCP_MODIFY_ERROR_INDICATION) == 0)
@@ -348,6 +349,10 @@ int smf_5gc_pfcp_send_session_modification_request(
 
     xact->assoc_stream = stream;
     xact->modify_flags = flags | OGS_PFCP_MODIFY_SESSION;
+
+    ogs_list_init(&sess->pdr_to_modify_list);
+    ogs_list_for_each(&sess->pfcp.pdr_list, pdr)
+        ogs_list_add(&sess->pdr_to_modify_list, &pdr->to_modify_node);
 
     n4buf = smf_n4_build_session_modification_request(h.type, sess, xact);
     ogs_expect_or_return_val(n4buf, OGS_ERROR);
@@ -479,6 +484,7 @@ int smf_epc_pfcp_send_session_modification_request(
     ogs_pkbuf_t *n4buf = NULL;
     ogs_pfcp_header_t h;
     ogs_pfcp_xact_t *xact = NULL;
+    ogs_pfcp_pdr_t *pdr = NULL;
 
     ogs_assert(sess);
 
@@ -495,6 +501,10 @@ int smf_epc_pfcp_send_session_modification_request(
 
     xact->gtp_pti = gtp_pti;
     xact->gtp_cause = gtp_cause;
+
+    ogs_list_init(&sess->pdr_to_modify_list);
+    ogs_list_for_each(&sess->pfcp.pdr_list, pdr)
+        ogs_list_add(&sess->pdr_to_modify_list, &pdr->to_modify_node);
 
     n4buf = smf_n4_build_session_modification_request(h.type, sess, xact);
     ogs_expect_or_return_val(n4buf, OGS_ERROR);

@@ -142,7 +142,7 @@ ogs_pkbuf_t *smf_n4_build_session_modification_request(
         ogs_pfcp_pdrbuf_init();
     }
 
-    ogs_list_for_each(&sess->pfcp.pdr_list, pdr) {
+    ogs_list_for_each_entry(&sess->pdr_to_modify_list, pdr, to_modify_node) {
         ogs_pfcp_far_t *far = pdr->far;
         ogs_assert(far);
 
