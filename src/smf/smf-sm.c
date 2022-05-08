@@ -157,7 +157,7 @@ void smf_state_operational(ogs_fsm_t *s, smf_event_t *e)
             break;
         case OGS_GTP2_MODIFY_BEARER_REQUEST_TYPE:
             smf_s5c_handle_modify_bearer_request(
-                sess, gtp_xact, &gtp2_message.modify_bearer_request);
+                sess, gtp_xact, recvbuf, &gtp2_message.modify_bearer_request);
             break;
         case OGS_GTP2_CREATE_BEARER_RESPONSE_TYPE:
             smf_s5c_handle_create_bearer_response(
@@ -380,6 +380,13 @@ void smf_state_operational(ogs_fsm_t *s, smf_event_t *e)
 
         e->pfcp_message = &pfcp_message;
         e->pfcp_xact = pfcp_xact;
+
+        e->gtp2_message = NULL;
+        if (pfcp_xact->gtpbuf) {
+            rv = ogs_gtp2_parse_msg(&gtp2_message, pfcp_xact->gtpbuf);
+            e->gtp2_message = &gtp2_message;
+        }
+
         ogs_fsm_dispatch(&pfcp_node->sm, e);
         if (OGS_FSM_CHECK(&pfcp_node->sm, smf_pfcp_state_exception)) {
             ogs_error("PFCP state machine exception");

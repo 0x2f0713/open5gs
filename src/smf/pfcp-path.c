@@ -484,7 +484,7 @@ int smf_epc_pfcp_send_session_establishment_request(
 }
 
 int smf_epc_pfcp_send_session_modification_request(
-        smf_sess_t *sess, void *gtp_xact,
+        smf_sess_t *sess, void *gtp_xact, ogs_pkbuf_t *gtpbuf,
         uint64_t flags, uint8_t gtp_pti, uint8_t gtp_cause)
 {
     int rv;
@@ -502,6 +502,10 @@ int smf_epc_pfcp_send_session_modification_request(
 
     xact->gtp_pti = gtp_pti;
     xact->gtp_cause = gtp_cause;
+    if (gtpbuf) {
+        xact->gtpbuf = ogs_pkbuf_copy(gtpbuf);
+        ogs_expect_or_return_val(xact->gtpbuf, OGS_ERROR);
+    }
 
     ogs_list_init(&sess->pdr_to_modify_list);
     ogs_list_for_each(&sess->pfcp.pdr_list, pdr)
@@ -622,7 +626,7 @@ int smf_epc_pfcp_send_deactivation(smf_sess_t *sess, uint8_t gtp_cause)
 
         /* Deactivate WLAN Session */
         rv = smf_epc_pfcp_send_session_modification_request(
-                wlan_sess, NULL,
+                wlan_sess, NULL, NULL,
                 OGS_PFCP_MODIFY_DL_ONLY|OGS_PFCP_MODIFY_DEACTIVATE,
                 OGS_NAS_PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,
                 OGS_GTP2_CAUSE_ACCESS_CHANGED_FROM_NON_3GPP_TO_3GPP);
@@ -639,7 +643,7 @@ int smf_epc_pfcp_send_deactivation(smf_sess_t *sess, uint8_t gtp_cause)
 
             /* Deactivate EUTRAN Session */
             rv = smf_epc_pfcp_send_session_modification_request(
-                    eutran_sess, NULL,
+                    eutran_sess, NULL, NULL,
                     OGS_PFCP_MODIFY_DL_ONLY|OGS_PFCP_MODIFY_DEACTIVATE,
                     OGS_NAS_PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,
                     OGS_GTP2_CAUSE_RAT_CHANGED_FROM_3GPP_TO_NON_3GPP);

@@ -350,11 +350,11 @@ uint8_t smf_s5c_handle_delete_session_request(
 
 void smf_s5c_handle_modify_bearer_request(
         smf_sess_t *sess, ogs_gtp_xact_t *xact,
-        ogs_gtp2_modify_bearer_request_t *req)
+        ogs_pkbuf_t *gtpbuf, ogs_gtp2_modify_bearer_request_t *req)
 {
     int rv, i;
     uint8_t cause_value = 0;
-    ogs_gtp2_indication_t *indication = NULL;
+    uint64_t flags = 0;
 
     smf_ue_t *smf_ue = NULL;
     smf_bearer_t *bearer = NULL;
@@ -404,8 +404,6 @@ void smf_s5c_handle_modify_bearer_request(
     ogs_list_init(&sess->qos_flow_to_modify_list);
 
     for (i = 0; i < OGS_BEARER_PER_UE; i++) {
-        ogs_gtp2_f_teid_t *sgw_s5u_teid = NULL;
-
         if (req->bearer_contexts_to_be_modified[i].presence == 0)
             break;
         if (req->bearer_contexts_to_be_modified[i].
@@ -422,14 +420,48 @@ void smf_s5c_handle_modify_bearer_request(
         }
 
         if (req->bearer_contexts_to_be_modified[i].s4_u_sgsn_f_teid.presence) {
+            ogs_pfcp_far_t *far = NULL;
+            ogs_gtp2_f_teid_t *sgw_s5u_teid = NULL;
+
+            ogs_ip_t remote_ip;
+            ogs_ip_t zero_ip;
 
             /* Data Plane(DL) : SGW-S5U */
             sgw_s5u_teid = req->bearer_contexts_to_be_modified[i].
                             s4_u_sgsn_f_teid.data;
             ogs_assert(sgw_s5u_teid);
             bearer->sgw_s5u_teid = be32toh(sgw_s5u_teid->teid);
-            rv = ogs_gtp2_f_teid_to_ip(sgw_s5u_teid, &bearer->sgw_s5u_ip);
-            ogs_assert(rv == OGS_OK);
+            ogs_assert(OGS_OK ==
+                    ogs_gtp2_f_teid_to_ip(sgw_s5u_teid, &remote_ip));
+
+            memset(&zero_ip, 0, sizeof(ogs_ip_t));
+            if (memcmp(&bearer->sgw_s5u_ip, &zero_ip, sizeof(ogs_ip_t)) != 0 &&
+                memcmp(&bearer->sgw_s5u_ip,
+                    &remote_ip, sizeof(ogs_ip_t)) != 0) {
+
+                ogs_assert(sess->pfcp_node);
+
+                /* eNB IP is changed during handover */
+                if (sess->pfcp_node->up_function_features.empu) {
+                    flags |= OGS_PFCP_MODIFY_END_MARKER;
+                } else {
+                    ogs_error("UPF does not support End Marker");
+                }
+            }
+
+            memcpy(&bearer->sgw_s5u_ip, &remote_ip, sizeof(ogs_ip_t));
+
+            far = bearer->dl_far;
+            ogs_assert(far);
+
+            far->apply_action = OGS_PFCP_APPLY_ACTION_FORW;
+
+            ogs_assert(OGS_OK ==
+                ogs_pfcp_ip_to_outer_header_creation(
+                    &bearer->sgw_s5u_ip,
+                    &far->outer_header_creation,
+                    &far->outer_header_creation_len));
+            far->outer_header_creation.teid = bearer->sgw_s5u_teid;
 
             ogs_list_add(&sess->qos_flow_to_modify_list,
                             &bearer->to_modify_node);
@@ -442,9 +474,16 @@ void smf_s5c_handle_modify_bearer_request(
     if (ogs_list_count(&sess->qos_flow_to_modify_list)) {
 
         /* Need to modify SGW-S5U */
-        ogs_fatal("asdfkljasdfasdf");
+        rv = smf_epc_pfcp_send_session_modification_request(sess, xact, gtpbuf,
+                flags|OGS_PFCP_MODIFY_DL_ONLY|OGS_PFCP_MODIFY_ACTIVATE,
+                OGS_NAS_PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,
+                OGS_GTP2_CAUSE_UNDEFINED_VALUE);
+        ogs_assert(rv == OGS_OK);
 
     } else {
+
+        /* Check if Handover from Non-3GPP to 3GPP */
+        ogs_gtp2_indication_t *indication = NULL;
 
         ogs_assert(OGS_OK ==
             smf_gtp2_send_modify_bearer_response(sess, xact, req));
@@ -455,8 +494,7 @@ void smf_s5c_handle_modify_bearer_request(
         }
 
         if (indication && indication->handover_indication) {
-            ogs_assert(OGS_OK ==
-                smf_epc_pfcp_send_deactivation(sess,
+            ogs_assert(OGS_OK == smf_epc_pfcp_send_deactivation(sess,
                     OGS_GTP2_CAUSE_ACCESS_CHANGED_FROM_NON_3GPP_TO_3GPP));
         }
     }
