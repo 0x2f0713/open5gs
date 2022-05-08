@@ -357,7 +357,6 @@ void smf_s5c_handle_modify_bearer_request(
     ogs_gtp2_indication_t *indication = NULL;
 
     smf_ue_t *smf_ue = NULL;
-    smf_sess_t *wlan_sess = NULL;
 
     ogs_debug("Modify Bearer Request");
 
@@ -437,17 +436,8 @@ void smf_s5c_handle_modify_bearer_request(
     }
 
     if (indication && indication->handover_indication) {
-        ogs_assert(sess->session.name);
-        wlan_sess = smf_sess_find_by_apn(
-                smf_ue, sess->session.name, OGS_GTP2_RAT_TYPE_WLAN);
-        ogs_expect_or_return(wlan_sess);
-        ogs_expect_or_return(ogs_list_first(&wlan_sess->bearer_list));
-
         ogs_assert(OGS_OK ==
-            smf_epc_pfcp_send_session_modification_request(
-                wlan_sess, NULL,
-                OGS_PFCP_MODIFY_DL_ONLY|OGS_PFCP_MODIFY_DEACTIVATE,
-                OGS_NAS_PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,
+            smf_epc_pfcp_send_deactivation(sess,
                 OGS_GTP2_CAUSE_ACCESS_CHANGED_FROM_NON_3GPP_TO_3GPP));
     }
 }

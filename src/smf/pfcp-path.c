@@ -601,6 +601,60 @@ int smf_epc_pfcp_send_session_deletion_request(
     return rv;
 }
 
+int smf_epc_pfcp_send_deactivation(smf_sess_t *sess, uint8_t gtp_cause)
+{
+    int rv;
+    smf_ue_t *smf_ue = NULL;
+    smf_sess_t *eutran_sess = NULL, *wlan_sess = NULL;
+
+    ogs_assert(sess);
+    smf_ue = sess->smf_ue;
+    ogs_assert(smf_ue);
+
+    switch (gtp_cause) {
+    case OGS_GTP2_CAUSE_ACCESS_CHANGED_FROM_NON_3GPP_TO_3GPP:
+        /* Handover from Non-3GPP to 3GPP */
+        wlan_sess = smf_sess_find_by_apn(
+                smf_ue, sess->session.name, OGS_GTP2_RAT_TYPE_WLAN);
+        ogs_expect_or_return_val(wlan_sess, OGS_ERROR);
+        ogs_expect_or_return_val(
+                ogs_list_first(&wlan_sess->bearer_list), OGS_ERROR);
+
+        /* Deactivate WLAN Session */
+        rv = smf_epc_pfcp_send_session_modification_request(
+                wlan_sess, NULL,
+                OGS_PFCP_MODIFY_DL_ONLY|OGS_PFCP_MODIFY_DEACTIVATE,
+                OGS_NAS_PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,
+                OGS_GTP2_CAUSE_ACCESS_CHANGED_FROM_NON_3GPP_TO_3GPP);
+        ogs_expect_or_return_val(rv == OGS_OK, rv);
+        break;
+
+    case OGS_GTP2_CAUSE_RAT_CHANGED_FROM_3GPP_TO_NON_3GPP:
+        /* Handover from 3GPP to Non-3GPP */
+        eutran_sess = smf_sess_find_by_apn(
+                smf_ue, sess->session.name, OGS_GTP2_RAT_TYPE_EUTRAN);
+        if (eutran_sess) {
+            ogs_expect_or_return_val(
+                    ogs_list_first(&eutran_sess->bearer_list), OGS_ERROR);
+
+            /* Deactivate EUTRAN Session */
+            rv = smf_epc_pfcp_send_session_modification_request(
+                    eutran_sess, NULL,
+                    OGS_PFCP_MODIFY_DL_ONLY|OGS_PFCP_MODIFY_DEACTIVATE,
+                    OGS_NAS_PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,
+                    OGS_GTP2_CAUSE_RAT_CHANGED_FROM_3GPP_TO_NON_3GPP);
+            ogs_expect_or_return_val(rv == OGS_OK, rv);
+        }
+        break;
+
+    default:
+        ogs_fatal("Invalid GTP-Cause[%d]", gtp_cause);
+        ogs_assert_if_reached();
+    }
+
+    return OGS_OK;
+}
+
 int smf_pfcp_send_session_report_response(
         ogs_pfcp_xact_t *xact, smf_sess_t *sess, uint8_t cause)
 {
