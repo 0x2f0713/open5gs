@@ -279,14 +279,12 @@ void mme_s11_handle_create_session_response(
         /* Data Plane(UL) : SGW-S1U */
         sgw_s1u_teid = rsp->bearer_contexts_created[i].s1_u_enodeb_f_teid.data;
         bearer->sgw_s1u_teid = be32toh(sgw_s1u_teid->teid);
-
         ogs_assert(OGS_OK ==
                 ogs_gtp2_f_teid_to_ip(sgw_s1u_teid, &bearer->sgw_s1u_ip));
 
         /* Data Plane(UL) : PGW-S5U */
         pgw_s5u_teid = rsp->bearer_contexts_created[i].s5_s8_u_sgw_f_teid.data;
         bearer->pgw_s5u_teid = be32toh(pgw_s5u_teid->teid);
-
         ogs_assert(OGS_OK ==
                 ogs_gtp2_f_teid_to_ip(pgw_s5u_teid, &bearer->pgw_s5u_ip));
 
@@ -602,13 +600,13 @@ void mme_s11_handle_create_bearer_request(
         ogs_gtp_xact_t *xact, sgw_ue_t *sgw_ue,
         ogs_gtp2_create_bearer_request_t *req)
 {
-    int rv;
     uint8_t cause_value = 0;
     mme_bearer_t *bearer = NULL, *default_bearer = NULL;
     mme_sess_t *sess = NULL;
     mme_ue_t *mme_ue = NULL;
 
     ogs_gtp2_f_teid_t *sgw_s1u_teid = NULL;
+    ogs_gtp2_f_teid_t *pgw_s5u_teid = NULL;
     ogs_gtp2_bearer_qos_t bearer_qos;
 
     ogs_assert(xact);
@@ -663,7 +661,11 @@ void mme_s11_handle_create_bearer_request(
         cause_value = OGS_GTP2_CAUSE_MANDATORY_IE_MISSING;
     }
     if (req->bearer_contexts.s1_u_enodeb_f_teid.presence == 0) {
-        ogs_error("No GTP TEID");
+        ogs_error("No SGW-S1U TEID");
+        cause_value = OGS_GTP2_CAUSE_CONDITIONAL_IE_MISSING;
+    }
+    if (req->bearer_contexts.s4_u_sgsn_f_teid.presence == 0) {
+        ogs_error("No PGW-S5U TEID");
         cause_value = OGS_GTP2_CAUSE_CONDITIONAL_IE_MISSING;
     }
     if (req->bearer_contexts.bearer_level_qos.presence == 0) {
@@ -704,8 +706,14 @@ void mme_s11_handle_create_bearer_request(
     /* Data Plane(UL) : SGW-S1U */
     sgw_s1u_teid = req->bearer_contexts.s1_u_enodeb_f_teid.data;
     bearer->sgw_s1u_teid = be32toh(sgw_s1u_teid->teid);
-    rv = ogs_gtp2_f_teid_to_ip(sgw_s1u_teid, &bearer->sgw_s1u_ip);
-    ogs_assert(rv == OGS_OK);
+    ogs_assert(OGS_OK ==
+            ogs_gtp2_f_teid_to_ip(sgw_s1u_teid, &bearer->sgw_s1u_ip));
+
+    /* Data Plane(UL) : PGW-S5U */
+    pgw_s5u_teid = req->bearer_contexts.s4_u_sgsn_f_teid.data;
+    bearer->pgw_s5u_teid = be32toh(pgw_s5u_teid->teid);
+    ogs_assert(OGS_OK ==
+            ogs_gtp2_f_teid_to_ip(pgw_s5u_teid, &bearer->pgw_s5u_ip));
 
     /* Bearer QoS */
     ogs_expect_or_return(ogs_gtp2_parse_bearer_qos(&bearer_qos,

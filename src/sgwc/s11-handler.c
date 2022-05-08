@@ -323,6 +323,34 @@ void sgwc_s11_handle_create_session_request(
             far->outer_header_creation.teid = dl_tunnel->remote_teid;
         }
 
+        if (req->bearer_contexts_to_be_created[i].s5_s8_u_sgw_f_teid.presence) {
+
+            sgwc_tunnel_t *ul_tunnel = NULL;
+            ogs_pfcp_far_t *far = NULL;
+            ogs_gtp2_f_teid_t *pgw_s5u_teid = NULL;
+
+            ul_tunnel = sgwc_ul_tunnel_in_bearer(bearer);
+            ogs_assert(ul_tunnel);
+
+            /* Data Plane(UL) : PGW-S5U */
+            pgw_s5u_teid = req->bearer_contexts_to_be_created[i].
+                            s5_s8_u_sgw_f_teid.data;
+            ul_tunnel->remote_teid = be32toh(pgw_s5u_teid->teid);
+
+            ogs_assert(OGS_OK ==
+                    ogs_gtp2_f_teid_to_ip(pgw_s5u_teid, &ul_tunnel->remote_ip));
+
+            far = ul_tunnel->far;
+            ogs_assert(far);
+
+            far->apply_action = OGS_PFCP_APPLY_ACTION_FORW;
+
+            ogs_assert(OGS_OK == ogs_pfcp_ip_to_outer_header_creation(
+                    &ul_tunnel->remote_ip, &far->outer_header_creation,
+                    &far->outer_header_creation_len));
+            far->outer_header_creation.teid = ul_tunnel->remote_teid;
+        }
+
         /* Set Session QoS from Default Bearer Level QoS */
         if (i == 0) {
             sess->session.qos.index = bearer_qos.qci;
