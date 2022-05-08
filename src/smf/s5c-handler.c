@@ -352,11 +352,12 @@ void smf_s5c_handle_modify_bearer_request(
         smf_sess_t *sess, ogs_gtp_xact_t *xact,
         ogs_gtp2_modify_bearer_request_t *req)
 {
-    int rv;
+    int rv, i;
     uint8_t cause_value = 0;
     ogs_gtp2_indication_t *indication = NULL;
 
     smf_ue_t *smf_ue = NULL;
+    smf_bearer_t *bearer = NULL;
 
     ogs_debug("Modify Bearer Request");
 
@@ -399,46 +400,65 @@ void smf_s5c_handle_modify_bearer_request(
                 sess->sgw_s5c_teid, sess->smf_n4_teid);
     }
 
-#if 0 /* TODO */
-    switch (sess->gtp_rat_type) {
-    case OGS_GTP2_RAT_TYPE_EUTRAN:
-        sgw_s5u_teid = req->bearer_contexts_to_be_created[0].
-            s5_s8_u_sgw_f_teid.data;
-        ogs_assert(sgw_s5u_teid);
-        bearer->sgw_s5u_teid = be32toh(sgw_s5u_teid->teid);
-        rv = ogs_gtp2_f_teid_to_ip(sgw_s5u_teid, &bearer->sgw_s5u_ip);
-        ogs_assert(rv == OGS_OK);
+    /* Check Modify Bearer */
+    ogs_list_init(&sess->qos_flow_to_modify_list);
 
-        break;
-    case OGS_GTP2_RAT_TYPE_WLAN:
-        sgw_s5u_teid = req->bearer_contexts_to_be_created[0].
-            s2b_u_epdg_f_teid_5.data;
-        ogs_assert(sgw_s5u_teid);
-        bearer->sgw_s5u_teid = be32toh(sgw_s5u_teid->teid);
-        rv = ogs_gtp2_f_teid_to_ip(sgw_s5u_teid, &bearer->sgw_s5u_ip);
-        ogs_assert(rv == OGS_OK);
-        break;
-    default:
-        ogs_error("Unknown RAT Type [%d]", sess->gtp_rat_type);
-        ogs_assert_if_reached();
+    for (i = 0; i < OGS_BEARER_PER_UE; i++) {
+        ogs_gtp2_f_teid_t *sgw_s5u_teid = NULL;
+
+        if (req->bearer_contexts_to_be_modified[i].presence == 0)
+            break;
+        if (req->bearer_contexts_to_be_modified[i].
+                eps_bearer_id.presence == 0) {
+            ogs_error("No EPS Bearer ID");
+            break;
+        }
+        /* EPS Bearer ID */
+        bearer = smf_bearer_find_by_ebi(sess,
+                    req->bearer_contexts_to_be_modified[i].eps_bearer_id.u8);
+        if (!bearer) {
+            ogs_error("No Bearer Context");
+            break;
+        }
+
+        if (req->bearer_contexts_to_be_modified[i].s4_u_sgsn_f_teid.presence) {
+
+            /* Data Plane(DL) : SGW-S5U */
+            sgw_s5u_teid = req->bearer_contexts_to_be_modified[i].
+                            s4_u_sgsn_f_teid.data;
+            ogs_assert(sgw_s5u_teid);
+            bearer->sgw_s5u_teid = be32toh(sgw_s5u_teid->teid);
+            rv = ogs_gtp2_f_teid_to_ip(sgw_s5u_teid, &bearer->sgw_s5u_ip);
+            ogs_assert(rv == OGS_OK);
+
+            ogs_list_add(&sess->qos_flow_to_modify_list,
+                            &bearer->to_modify_node);
+
+            ogs_debug("    SGW_S5U_TEID[0x%x] PGW_S5U_TEID[0x%x]",
+                    bearer->sgw_s5u_teid, bearer->pgw_s5u_teid);
+        }
     }
 
-    ogs_debug("    SGW_S5U_TEID[0x%x] PGW_S5U_TEID[0x%x]",
-            bearer->sgw_s5u_teid, bearer->pgw_s5u_teid);
-#endif
+    if (ogs_list_count(&sess->qos_flow_to_modify_list)) {
 
-    ogs_assert(OGS_OK ==
-        smf_gtp2_send_modify_bearer_response(sess, xact, req));
+        /* Need to modify SGW-S5U */
+        ogs_fatal("asdfkljasdfasdf");
 
-    if (req->indication_flags.presence &&
-        req->indication_flags.data && req->indication_flags.len) {
-        indication = req->indication_flags.data;
-    }
+    } else {
 
-    if (indication && indication->handover_indication) {
         ogs_assert(OGS_OK ==
-            smf_epc_pfcp_send_deactivation(sess,
-                OGS_GTP2_CAUSE_ACCESS_CHANGED_FROM_NON_3GPP_TO_3GPP));
+            smf_gtp2_send_modify_bearer_response(sess, xact, req));
+
+        if (req->indication_flags.presence &&
+            req->indication_flags.data && req->indication_flags.len) {
+            indication = req->indication_flags.data;
+        }
+
+        if (indication && indication->handover_indication) {
+            ogs_assert(OGS_OK ==
+                smf_epc_pfcp_send_deactivation(sess,
+                    OGS_GTP2_CAUSE_ACCESS_CHANGED_FROM_NON_3GPP_TO_3GPP));
+        }
     }
 }
 
