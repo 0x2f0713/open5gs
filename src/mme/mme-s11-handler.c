@@ -373,7 +373,7 @@ void mme_s11_handle_create_session_response(
     } else if (create_action == OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST) {
 
         GTP_COUNTER_CHECK(mme_ue, GTP_COUNTER_CREATE_SESSION_BY_PATH_SWITCH,
-            ogs_assert(OGS_OK == s1ap_send_path_switch_ack(mme_ue));
+            ogs_assert(OGS_OK == s1ap_send_path_switch_ack(mme_ue, true));
         );
 
     } else {
@@ -463,7 +463,7 @@ void mme_s11_handle_modify_bearer_response(
 
     switch (modify_action) {
     case OGS_GTP_MODIFY_IN_PATH_SWITCH_REQUEST:
-        ogs_assert(OGS_OK == s1ap_send_path_switch_ack(mme_ue));
+        ogs_assert(OGS_OK == s1ap_send_path_switch_ack(mme_ue, false));
         break;
     case OGS_GTP_MODIFY_IN_E_RAB_MODIFICATION:
         ogs_assert(OGS_OK == s1ap_send_e_rab_modification_confirm(mme_ue));
