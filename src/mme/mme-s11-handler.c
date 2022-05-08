@@ -20,6 +20,7 @@
 #include "mme-event.h"
 #include "mme-sm.h"
 #include "mme-context.h"
+#include "mme-timer.h"
 
 #include "s1ap-path.h"
 #include "mme-gtp-path.h"
@@ -373,6 +374,9 @@ void mme_s11_handle_create_session_response(
     } else if (create_action == OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST) {
 
         GTP_COUNTER_CHECK(mme_ue, GTP_COUNTER_CREATE_SESSION_BY_PATH_SWITCH,
+            ogs_timer_start(sgw_ue->t_s11_holding,
+                    mme_timer_cfg(MME_TIMER_S11_HOLDING)->duration);
+
             sgw_ue_associate_mme_ue(sgw_ue, mme_ue);
             ogs_assert(OGS_OK == s1ap_send_path_switch_ack(mme_ue, true));
         );

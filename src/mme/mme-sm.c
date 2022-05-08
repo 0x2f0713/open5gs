@@ -625,6 +625,42 @@ void mme_state_operational(ogs_fsm_t *s, mme_event_t *e)
         ogs_pkbuf_free(pkbuf);
         break;
 
+    case MME_EVT_S11_TIMER:
+        sgw_ue = e->sgw_ue;
+        ogs_assert(sgw_ue);
+        mme_ue = sgw_ue->mme_ue;
+        ogs_assert(mme_ue);
+
+        switch (e->timer_id) {
+        case MME_TIMER_S11_HOLDING:
+            ogs_list_for_each(&mme_ue->sess_list, sess) {
+                sgw_ue_t *source_ue = NULL, *target_ue = NULL;
+
+                target_ue = sgw_ue_cycle(sgw_ue);
+                ogs_assert(target_ue);
+                source_ue = sgw_ue_cycle(target_ue->source_ue);
+
+#if 0
+                GTP_COUNTER_INCREMENT(
+                    mme_ue, GTP_COUNTER_DELETE_SESSION_BY_PATH_SWITCH);
+
+                ogs_assert(OGS_OK ==
+                    mme_gtp_send_delete_session_request(
+                        source_ue, sess,
+                        OGS_GTP_DELETE_IN_PATH_SWITCH_REQUEST));
+#else
+                ogs_error("TODO");
+#endif
+            }
+            break;
+        default:
+            ogs_error("Unknown timer[%s:%d]",
+                    mme_timer_get_name(e->timer_id), e->timer_id);
+            break;
+        }
+        break;
+
+
     case MME_EVT_SGSAP_LO_SCTP_COMM_UP:
         sock = e->sock;
         ogs_assert(sock);

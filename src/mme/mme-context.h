@@ -288,8 +288,8 @@ struct sgw_ue_s {
      */
     int             session_context_will_deleted;
 
-    /* GTPv2-C Holding timer for removing this context */
-    ogs_timer_t     *t_gtp2_holding;
+    /* S11 Holding timer for removing this context */
+    ogs_timer_t     *t_s11_holding;
 
     /* Related Context */
     union {
@@ -533,9 +533,8 @@ struct mme_ue_s {
 
 #define MAX_NUM_OF_GTP_COUNTER                                  16
 
-#define GTP_COUNTER_MODIFY_BEARER_BY_PATH_SWITCH                1
-#define GTP_COUNTER_MODIFY_BEARER_BY_E_RAB_MODIFICATION         2
-#define GTP_COUNTER_CREATE_SESSION_BY_PATH_SWITCH               3
+#define GTP_COUNTER_CREATE_SESSION_BY_PATH_SWITCH               1
+#define GTP_COUNTER_DELETE_SESSION_BY_PATH_SWITCH               2
     struct {
         uint8_t request;
         uint8_t response;

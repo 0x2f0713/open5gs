@@ -267,20 +267,19 @@ int mme_gtp_send_modify_bearer_request(
     return rv;
 }
 
-int mme_gtp_send_delete_session_request(mme_sess_t *sess, int action)
+int mme_gtp_send_delete_session_request(
+        sgw_ue_t *sgw_ue, mme_sess_t *sess, int action)
 {
     int rv;
     ogs_pkbuf_t *s11buf = NULL;
     ogs_gtp2_header_t h;
     ogs_gtp_xact_t *xact = NULL;
     mme_ue_t *mme_ue = NULL;
-    sgw_ue_t *sgw_ue = NULL;
 
     ogs_assert(action);
     ogs_assert(sess);
     mme_ue = sess->mme_ue;
     ogs_assert(mme_ue);
-    sgw_ue = mme_ue->sgw_ue;
     ogs_assert(sgw_ue);
 
     memset(&h, 0, sizeof(ogs_gtp2_header_t));
@@ -330,7 +329,7 @@ void mme_gtp_send_delete_all_sessions(mme_ue_t *mme_ue, int action)
                 OGS_FSM_CHECK(&bearer->sm, esm_state_pdn_will_disconnect)) {
                 ogs_warn("PDN will disconnect[EBI:%d]", bearer->ebi);
             } else {
-                mme_gtp_send_delete_session_request(sess, action);
+                mme_gtp_send_delete_session_request(sgw_ue, sess, action);
             }
         } else {
             mme_sess_remove(sess);

@@ -2044,9 +2044,9 @@ sgw_ue_t *sgw_ue_add(mme_sgw_t *sgw)
 
     sgw_ue->mme_s11_teid = sgw_ue->index;
 
-    sgw_ue->t_gtp2_holding = ogs_timer_add(
+    sgw_ue->t_s11_holding = ogs_timer_add(
             ogs_app()->timer_mgr, mme_timer_s11_holding_timer_expire, sgw_ue);
-    ogs_assert(sgw_ue->t_gtp2_holding);
+    ogs_assert(sgw_ue->t_s11_holding);
 
     sgw_ue->sgw = sgw;
 
@@ -2065,8 +2065,8 @@ void sgw_ue_remove(sgw_ue_t *sgw_ue)
 
     ogs_list_remove(&sgw->sgw_ue_list, sgw_ue);
 
-    ogs_assert(sgw_ue->t_gtp2_holding);
-    ogs_timer_delete(sgw_ue->t_gtp2_holding);
+    ogs_assert(sgw_ue->t_s11_holding);
+    ogs_timer_delete(sgw_ue->t_s11_holding);
 
     ogs_pool_free(&sgw_ue_pool, sgw_ue);
 }
