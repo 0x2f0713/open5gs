@@ -521,6 +521,15 @@ void mme_state_operational(ogs_fsm_t *s, mme_event_t *e)
             break;
         }
 
+        gnode = e->gnode;
+        ogs_assert(gnode);
+
+        rv = ogs_gtp_xact_receive(gnode, &gtp_message.h, &xact);
+        if (rv != OGS_OK) {
+            ogs_pkbuf_free(pkbuf);
+            break;
+        }
+
         /*
          * 5.5.2 in spec 29.274
          *
@@ -553,20 +562,6 @@ void mme_state_operational(ogs_fsm_t *s, mme_event_t *e)
         if (gtp_message.h.teid_presence && gtp_message.h.teid != 0) {
             /* Cause is not "Context not found" */
             sgw_ue = sgw_ue_find_by_mme_s11_teid(gtp_message.h.teid);
-        }
-
-        if (sgw_ue) {
-            gnode = sgw_ue->gnode;
-            ogs_assert(gnode);
-        } else {
-            gnode = e->gnode;
-            ogs_assert(gnode);
-        }
-
-        rv = ogs_gtp_xact_receive(gnode, &gtp_message.h, &xact);
-        if (rv != OGS_OK) {
-            ogs_pkbuf_free(pkbuf);
-            break;
         }
 
         switch (gtp_message.h.type) {

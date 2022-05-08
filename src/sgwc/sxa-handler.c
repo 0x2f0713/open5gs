@@ -1056,7 +1056,7 @@ void sgwc_sxa_handle_session_modification_response(
 
         /* Copy Bearer-Contexts-Modified from Modify-Bearer-Request
          *
-         * TS 29.274 Table 7.2.7-2
+         * TS 29.274 Table 7.2.8-2
          * NOTE 1: The SGW shall not change its F-TEID for a given interface
          * during the Handover, Service Request, E-UTRAN Initial Attach,
          * UE Requested PDN connectivity and PDP Context Activation procedures.

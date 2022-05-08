@@ -103,17 +103,8 @@ void smf_state_operational(ogs_fsm_t *s, smf_event_t *e)
         }
         e->gtp2_message = &gtp2_message;
 
-        if (gtp2_message.h.teid != 0) {
-            sess = smf_sess_find_by_teid(gtp2_message.h.teid);
-        }
-
-        if (sess) {
-            gnode = sess->gnode;
-            ogs_assert(gnode);
-        } else {
-            gnode = e->gnode;
-            ogs_assert(gnode);
-        }
+        gnode = e->gnode;
+        ogs_assert(gnode);
 
         rv = ogs_gtp_xact_receive(gnode, &gtp2_message.h, &gtp_xact);
         if (rv != OGS_OK) {
@@ -121,6 +112,10 @@ void smf_state_operational(ogs_fsm_t *s, smf_event_t *e)
             break;
         }
         e->gtp_xact = gtp_xact;
+
+        if (gtp2_message.h.teid != 0) {
+            sess = smf_sess_find_by_teid(gtp2_message.h.teid);
+        }
 
         switch(gtp2_message.h.type) {
         case OGS_GTP2_ECHO_REQUEST_TYPE:

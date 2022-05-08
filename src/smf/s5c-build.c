@@ -262,7 +262,6 @@ ogs_pkbuf_t *smf_s5c_build_modify_bearer_response(
         uint8_t type, smf_sess_t *sess,
         ogs_gtp2_modify_bearer_request_t *req)
 {
-    int i;
     ogs_gtp2_message_t gtp_message;
     ogs_gtp2_modify_bearer_response_t *rsp = NULL;
 
@@ -280,30 +279,6 @@ ogs_pkbuf_t *smf_s5c_build_modify_bearer_response(
     rsp->cause.presence = 1;
     rsp->cause.data = &cause;
     rsp->cause.len = sizeof(cause);
-
-    for (i = 0; i < OGS_BEARER_PER_UE; i++) {
-        if (req->bearer_contexts_to_be_modified[i].presence == 0)
-            break;
-        if (req->bearer_contexts_to_be_modified[i].eps_bearer_id.presence == 0)
-            break;
-        if (req->bearer_contexts_to_be_modified[i].
-                s1_u_enodeb_f_teid.presence == 0)
-            break;
-
-        rsp->bearer_contexts_modified[i].presence = 1;
-        rsp->bearer_contexts_modified[i].eps_bearer_id.presence = 1;
-        rsp->bearer_contexts_modified[i].eps_bearer_id.u8 =
-            req->bearer_contexts_to_be_modified[i].eps_bearer_id.u8;
-        rsp->bearer_contexts_modified[i].s1_u_enodeb_f_teid.presence = 1;
-        rsp->bearer_contexts_modified[i].s1_u_enodeb_f_teid.data =
-            req->bearer_contexts_to_be_modified[i].s1_u_enodeb_f_teid.data;
-        rsp->bearer_contexts_modified[i].s1_u_enodeb_f_teid.len =
-            req->bearer_contexts_to_be_modified[i].s1_u_enodeb_f_teid.len;
-
-        rsp->bearer_contexts_modified[i].cause.presence = 1;
-        rsp->bearer_contexts_modified[i].cause.len = sizeof(cause);
-        rsp->bearer_contexts_modified[i].cause.data = &cause;
-    }
 
     /* build */
     gtp_message.h.type = type;
