@@ -260,14 +260,21 @@ ogs_pkbuf_t *smf_s5c_build_delete_session_response(
 
 ogs_pkbuf_t *smf_s5c_build_modify_bearer_response(
         uint8_t type, smf_sess_t *sess,
-        ogs_gtp2_modify_bearer_request_t *req)
+        ogs_gtp2_modify_bearer_request_t *req, bool sgw_relocation)
 {
+    int i;
+
     ogs_gtp2_message_t gtp_message;
     ogs_gtp2_modify_bearer_response_t *rsp = NULL;
 
     ogs_gtp2_cause_t cause;
 
+    smf_ue_t *smf_ue = NULL;
+    smf_bearer_t *bearer = NULL;
+
     ogs_assert(sess);
+    smf_ue = sess->smf_ue;
+    ogs_assert(smf_ue);
     ogs_assert(req);
 
     rsp = &gtp_message.modify_bearer_response;
@@ -279,6 +286,43 @@ ogs_pkbuf_t *smf_s5c_build_modify_bearer_response(
     rsp->cause.presence = 1;
     rsp->cause.data = &cause;
     rsp->cause.len = sizeof(cause);
+
+    if (sgw_relocation == true) {
+
+        if (smf_ue->msisdn_len) {
+            rsp->msisdn.presence = 1;
+            rsp->msisdn.len = smf_ue->msisdn_len;
+            rsp->msisdn.data = smf_ue->msisdn;
+        }
+
+        for (i = 0; i < OGS_BEARER_PER_UE; i++) {
+            if (req->bearer_contexts_to_be_modified[i].presence == 0)
+                break;
+            if (req->bearer_contexts_to_be_modified[i].
+                    eps_bearer_id.presence == 0) {
+                ogs_error("No EPS Bearer ID");
+                break;
+            }
+
+            bearer = smf_bearer_find_by_ebi(sess,
+                    req->bearer_contexts_to_be_modified[i].eps_bearer_id.u8);
+            if (!bearer) {
+                ogs_error("Unknown EPS Bearer ID[%d]",
+                    req->bearer_contexts_to_be_modified[i].eps_bearer_id.u8);
+                break;
+            }
+
+            rsp->bearer_contexts_modified[i].presence = 1;
+            rsp->bearer_contexts_modified[i].eps_bearer_id.presence = 1;
+            rsp->bearer_contexts_modified[i].eps_bearer_id.u8 =
+                req->bearer_contexts_to_be_modified[i].eps_bearer_id.u8;
+
+            rsp->bearer_contexts_modified[i].charging_id.presence = 1;
+            rsp->bearer_contexts_modified[i].charging_id.u32 =
+                sess->charging.id;
+        }
+
+    }
 
     /* build */
     gtp_message.h.type = type;

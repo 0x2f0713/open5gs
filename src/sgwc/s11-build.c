@@ -124,62 +124,6 @@ ogs_pkbuf_t *sgwc_s11_build_create_session_response(
         rsp->bearer_contexts_created[i].s5_s8_u_sgw_f_teid.len =
             pgw_s5u_len[i];
 
-#if 0
-        /* Bearer QoS
-         * if PCRF changes Bearer QoS, this should be included. */
-        if (sess->gtp.create_session_response_bearer_qos == true) {
-            memset(&bearer_qos, 0, sizeof(bearer_qos));
-            bearer_qos.qci = sess->session.qos.index;
-            bearer_qos.priority_level = sess->session.qos.arp.priority_level;
-            bearer_qos.pre_emption_capability =
-                sess->session.qos.arp.pre_emption_capability;
-            bearer_qos.pre_emption_vulnerability =
-                sess->session.qos.arp.pre_emption_vulnerability;
-
-            rsp->bearer_contexts_created[i].bearer_level_qos.presence = 1;
-            ogs_gtp2_build_bearer_qos(
-                    &rsp->bearer_contexts_created[i].bearer_level_qos,
-                    &bearer_qos, bearer_qos_buf[i], GTP2_BEARER_QOS_LEN);
-        }
-
-        /* Bearer Charging ID */
-        rsp->bearer_contexts_created[i].charging_id.presence = 1;
-        rsp->bearer_contexts_created[i].charging_id.u32 = sess->charging.id;
-#endif
-
-#if 0
-        /* Data Plane(UL) : SMF-S5U */
-        memset(&pgw_s5u_teid[i], 0, sizeof(ogs_gtp2_f_teid_t));
-        pgw_s5u_teid[i].teid = htobe32(bearer->pgw_s5u_teid);
-        ogs_assert(bearer->pgw_s5u_addr || bearer->pgw_s5u_addr6);
-        rv = ogs_gtp2_sockaddr_to_f_teid(
-            bearer->pgw_s5u_addr, bearer->pgw_s5u_addr6,
-            &pgw_s5u_teid[i], &pgw_s5u_len[i]);
-        ogs_expect_or_return_val(rv == OGS_OK, NULL);
-
-        switch (sess->gtp_rat_type) {
-        case OGS_GTP2_RAT_TYPE_EUTRAN:
-            pgw_s5u_teid[i].interface_type = OGS_GTP2_F_TEID_S5_S8_PGW_GTP_U;
-            rsp->bearer_contexts_created[i].s5_s8_u_sgw_f_teid.presence = 1;
-            rsp->bearer_contexts_created[i].s5_s8_u_sgw_f_teid.data =
-                &pgw_s5u_teid[i];
-            rsp->bearer_contexts_created[i].s5_s8_u_sgw_f_teid.len =
-                pgw_s5u_len[i];
-            break;
-        case OGS_GTP2_RAT_TYPE_WLAN:
-            pgw_s5u_teid[i].interface_type = OGS_GTP2_F_TEID_S2B_U_PGW_GTP_U;
-            rsp->bearer_contexts_created[i].s12_rnc_f_teid.presence = 1;
-            rsp->bearer_contexts_created[i].s12_rnc_f_teid.data =
-                &pgw_s5u_teid[i];
-            rsp->bearer_contexts_created[i].s12_rnc_f_teid.len =
-                pgw_s5u_len[i];
-            break;
-        default:
-            ogs_error("Unknown RAT Type [%d]", sess->gtp_rat_type);
-            ogs_assert_if_reached();
-        }
-#endif
-
         i++;
     }
 

@@ -42,7 +42,7 @@ int smf_gtp2_send_create_session_response(
         smf_sess_t *sess, ogs_gtp_xact_t *xact);
 int smf_gtp2_send_modify_bearer_response(
         smf_sess_t *sess, ogs_gtp_xact_t *xact,
-        ogs_gtp2_modify_bearer_request_t *req);
+        ogs_gtp2_modify_bearer_request_t *req, bool sgw_relocation);
 int smf_gtp2_send_delete_session_response(
         smf_sess_t *sess, ogs_gtp_xact_t *xact);
 int smf_gtp2_send_delete_bearer_request(

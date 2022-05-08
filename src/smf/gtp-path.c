@@ -455,7 +455,7 @@ int smf_gtp2_send_create_session_response(
 
 int smf_gtp2_send_modify_bearer_response(
         smf_sess_t *sess, ogs_gtp_xact_t *xact,
-        ogs_gtp2_modify_bearer_request_t *req)
+        ogs_gtp2_modify_bearer_request_t *req, bool sgw_relocation)
 {
     int rv;
     ogs_gtp2_header_t h;
@@ -469,7 +469,8 @@ int smf_gtp2_send_modify_bearer_response(
     h.type = OGS_GTP2_MODIFY_BEARER_RESPONSE_TYPE;
     h.teid = sess->sgw_s5c_teid;
 
-    pkbuf = smf_s5c_build_modify_bearer_response(h.type, sess, req);
+    pkbuf = smf_s5c_build_modify_bearer_response(
+                h.type, sess, req, sgw_relocation);
     ogs_expect_or_return_val(pkbuf, OGS_ERROR);
 
     rv = ogs_gtp_xact_update_tx(xact, &h, pkbuf);

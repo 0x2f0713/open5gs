@@ -318,6 +318,15 @@ uint8_t smf_s5c_handle_create_session_request(
         OGS_TLV_STORE_DATA(&sess->gtp.ue_timezone, &req->ue_time_zone);
     }
 
+    /* Set MSISDN */
+    if (req->msisdn.presence && req->msisdn.len && req->msisdn.data) {
+        smf_ue->msisdn_len = req->msisdn.len;
+        memcpy(smf_ue->msisdn, req->msisdn.data,
+                ogs_min(smf_ue->msisdn_len, OGS_MAX_MSISDN_LEN));
+        ogs_buffer_to_bcd(smf_ue->msisdn,
+                smf_ue->msisdn_len, smf_ue->msisdn_bcd);
+    }
+
     return OGS_GTP2_CAUSE_REQUEST_ACCEPTED;
 }
 
@@ -488,7 +497,7 @@ void smf_s5c_handle_modify_bearer_request(
         ogs_gtp2_indication_t *indication = NULL;
 
         ogs_assert(OGS_OK ==
-            smf_gtp2_send_modify_bearer_response(sess, xact, req));
+            smf_gtp2_send_modify_bearer_response(sess, xact, req, false));
 
         if (req->indication_flags.presence &&
             req->indication_flags.data && req->indication_flags.len) {

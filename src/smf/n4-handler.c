@@ -1061,7 +1061,7 @@ void smf_epc_n4_handle_session_modification_response(
                     &recv_message->modify_bearer_request;
 
                 ogs_assert(OGS_OK == smf_gtp2_send_modify_bearer_response(
-                            sess, gtp_xact, gtp_req));
+                            sess, gtp_xact, gtp_req, true));
 
                 /* Check if Handover from Non-3GPP to 3GPP */
                 if (gtp_req->indication_flags.presence &&
