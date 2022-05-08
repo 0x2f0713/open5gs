@@ -132,10 +132,7 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
     }
     ogs_assert(ogs_pkbuf_pull(pkbuf, len));
 
-    if (gtp_h->type == OGS_GTPU_MSGTYPE_END_MARKER) {
-        /* Nothing */
-
-    } else if (gtp_h->type == OGS_GTPU_MSGTYPE_ERR_IND) {
+    if (gtp_h->type == OGS_GTPU_MSGTYPE_ERR_IND) {
         ogs_pfcp_far_t *far = NULL;
 
         far = ogs_pfcp_far_find_by_error_indication(pkbuf);
@@ -156,7 +153,8 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
             ogs_error("[DROP] Cannot find FAR by Error-Indication");
             ogs_log_hexdump(OGS_LOG_ERROR, pkbuf->data, pkbuf->len);
         }
-    } else if (gtp_h->type == OGS_GTPU_MSGTYPE_GPDU) {
+    } else if (gtp_h->type == OGS_GTPU_MSGTYPE_GPDU ||
+                gtp_h->type == OGS_GTPU_MSGTYPE_END_MARKER) {
         struct ip *ip_h = NULL;
         ogs_pfcp_object_t *pfcp_object = NULL;
         ogs_pfcp_sess_t *pfcp_sess = NULL;
@@ -209,7 +207,8 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
         }
 
         ogs_assert(pdr);
-        ogs_assert(true == ogs_pfcp_up_handle_pdr(pdr, pkbuf, &report));
+        ogs_assert(true == ogs_pfcp_up_handle_pdr(
+                                pdr, gtp_h->type, pkbuf, &report));
 
         if (report.type.downlink_data_report) {
             ogs_assert(pdr->sess);
