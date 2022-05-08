@@ -22,7 +22,7 @@
 
 #include "s11-handler.h"
 
-static void sess_timeout(ogs_gtp_xact_t *xact, void *data)
+static void gtp_sess_timeout(ogs_gtp_xact_t *xact, void *data)
 {
     sgwc_sess_t *sess = data;
     sgwc_ue_t *sgwc_ue = NULL;
@@ -52,7 +52,7 @@ static void sess_timeout(ogs_gtp_xact_t *xact, void *data)
     }
 }
 
-static void bearer_timeout(ogs_gtp_xact_t *xact, void *data)
+static void gtp_bearer_timeout(ogs_gtp_xact_t *xact, void *data)
 {
     sgwc_bearer_t *bearer = data;
     sgwc_sess_t *sess = NULL;
@@ -70,6 +70,29 @@ static void bearer_timeout(ogs_gtp_xact_t *xact, void *data)
 
     ogs_error("GTP Timeout : IMSI[%s] Message-Type[%d]",
             sgwc_ue->imsi_bcd, type);
+}
+
+static void pfcp_sess_timeout(ogs_pfcp_xact_t *xact, void *data)
+{
+    uint8_t type;
+
+    ogs_assert(xact);
+    type = xact->seq[0].type;
+
+    switch (type) {
+    case OGS_PFCP_SESSION_ESTABLISHMENT_REQUEST_TYPE:
+        ogs_error("No PFCP session establishment response");
+        break;
+    case OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE:
+        ogs_error("No PFCP session modification response");
+        break;
+    case OGS_PFCP_SESSION_DELETION_REQUEST_TYPE:
+        ogs_error("No PFCP session deletion response");
+        break;
+    default:
+        ogs_error("Not implemented [type:%d]", type);
+        break;
+    }
 }
 
 /* This code was created in case it will be used later,
@@ -418,9 +441,17 @@ void sgwc_s11_handle_modify_bearer_request(
         }
 
         if (!current_xact) {
-            current_xact = sgwc_pfcp_xact_create(sess, s11_xact, gtpbuf,
-                            OGS_PFCP_MODIFY_DL_ONLY|OGS_PFCP_MODIFY_ACTIVATE);
+            current_xact = ogs_pfcp_xact_local_create(
+                    sess->pfcp_node, pfcp_sess_timeout, sess);
             ogs_assert(current_xact);
+
+            current_xact->assoc_xact = s11_xact;
+            current_xact->modify_flags = OGS_PFCP_MODIFY_SESSION|
+                OGS_PFCP_MODIFY_DL_ONLY|OGS_PFCP_MODIFY_ACTIVATE;
+            if (gtpbuf) {
+                current_xact->gtpbuf = ogs_pkbuf_copy(gtpbuf);
+                ogs_assert(current_xact->gtpbuf);
+            }
 
             ogs_list_add(&pfcp_xact_list, &current_xact->tmpnode);
         }
@@ -569,7 +600,7 @@ void sgwc_s11_handle_delete_session_request(
     ogs_expect_or_return(gtpbuf);
 
     s5c_xact = ogs_gtp_xact_local_create(
-            sess->gnode, &message->h, gtpbuf, sess_timeout, sess);
+            sess->gnode, &message->h, gtpbuf, gtp_sess_timeout, sess);
     ogs_expect_or_return(s5c_xact);
 
     ogs_gtp_xact_associate(s11_xact, s5c_xact);
@@ -1421,7 +1452,7 @@ void sgwc_s11_handle_bearer_resource_command(
     ogs_expect_or_return(pkbuf);
 
     s5c_xact = ogs_gtp_xact_local_create(
-            sess->gnode, &message->h, pkbuf, bearer_timeout, bearer);
+            sess->gnode, &message->h, pkbuf, gtp_bearer_timeout, bearer);
     ogs_expect_or_return(s5c_xact);
 
     ogs_gtp_xact_associate(s11_xact, s5c_xact);

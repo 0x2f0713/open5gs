@@ -263,27 +263,6 @@ int sgwc_pfcp_send_session_establishment_request(
     return rv;
 }
 
-ogs_pfcp_xact_t *sgwc_pfcp_xact_create(
-        sgwc_sess_t *sess, ogs_gtp_xact_t *gtp_xact,
-        ogs_pkbuf_t *gtpbuf, uint64_t flags)
-{
-    ogs_pfcp_xact_t *xact = NULL;
-
-    ogs_assert(sess);
-
-    xact = ogs_pfcp_xact_local_create(sess->pfcp_node, sess_timeout, sess);
-    ogs_expect_or_return_val(xact, NULL);
-
-    xact->assoc_xact = gtp_xact;
-    xact->modify_flags = flags | OGS_PFCP_MODIFY_SESSION;
-    if (gtpbuf) {
-        xact->gtpbuf = ogs_pkbuf_copy(gtpbuf);
-        ogs_expect_or_return_val(xact->gtpbuf, NULL);
-    }
-
-    return xact;
-}
-
 int sgwc_pfcp_send_session_modification_request(
         sgwc_sess_t *sess, ogs_gtp_xact_t *gtp_xact,
         ogs_pkbuf_t *gtpbuf, uint64_t flags)
@@ -293,8 +272,15 @@ int sgwc_pfcp_send_session_modification_request(
 
     ogs_assert(sess);
 
-    xact = sgwc_pfcp_xact_create(sess, gtp_xact, gtpbuf, flags);
+    xact = ogs_pfcp_xact_local_create(sess->pfcp_node, sess_timeout, sess);
     ogs_expect_or_return_val(xact, OGS_ERROR);
+
+    xact->assoc_xact = gtp_xact;
+    xact->modify_flags = flags | OGS_PFCP_MODIFY_SESSION;
+    if (gtpbuf) {
+        xact->gtpbuf = ogs_pkbuf_copy(gtpbuf);
+        ogs_expect_or_return_val(xact->gtpbuf, OGS_ERROR);
+    }
 
     ogs_list_for_each(&sess->bearer_list, bearer)
         ogs_list_add(&xact->bearer_to_modify_list, &bearer->to_modify_node);
