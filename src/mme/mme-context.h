@@ -535,6 +535,7 @@ struct mme_ue_s {
 
 #define GTP_COUNTER_MODIFY_BEARER_BY_PATH_SWITCH                1
 #define GTP_COUNTER_MODIFY_BEARER_BY_E_RAB_MODIFICATION         2
+#define GTP_COUNTER_CREATE_SESSION_BY_PATH_SWITCH               3
     struct {
         uint8_t request;
         uint8_t response;

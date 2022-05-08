@@ -1994,6 +1994,9 @@ void s1ap_handle_path_switch_request(
         mme_sess_t *sess = NULL;
 
         ogs_list_for_each(&mme_ue->sess_list, sess) {
+            GTP_COUNTER_INCREMENT(
+                mme_ue, GTP_COUNTER_CREATE_SESSION_BY_PATH_SWITCH);
+
             ogs_assert(OGS_OK ==
                 mme_gtp_send_create_session_request(
                     sess, OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST));

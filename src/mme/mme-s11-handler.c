@@ -371,7 +371,11 @@ void mme_s11_handle_create_session_response(
             nas_eps_send_activate_default_bearer_context_request(
                 bearer, create_action));
     } else if (create_action == OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST) {
-        ogs_error("OK");
+
+        GTP_COUNTER_CHECK(mme_ue, GTP_COUNTER_CREATE_SESSION_BY_PATH_SWITCH,
+            ogs_assert(OGS_OK == s1ap_send_path_switch_ack(mme_ue));
+        );
+
     } else {
         ogs_fatal("Invalid Create Session Action[%d]", create_action);
         ogs_assert_if_reached();
