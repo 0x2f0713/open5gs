@@ -142,24 +142,39 @@ void mme_s11_handle_create_session_response(
         ogs_error("No S11 TEID");
         cause_value = OGS_GTP2_CAUSE_CONDITIONAL_IE_MISSING;
     }
-    if (rsp->pgw_s5_s8__s2a_s2b_f_teid_for_pmip_based_interface_or_for_gtp_based_control_plane_interface.presence == 0) {
-        ogs_error("No S5C TEID");
-        cause_value = OGS_GTP2_CAUSE_CONDITIONAL_IE_MISSING;
+
+    if (create_action == OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST) {
+
+        /* No need S5C TEID in PathSwitchRequest */
+
+    } else {
+
+        if (rsp->pgw_s5_s8__s2a_s2b_f_teid_for_pmip_based_interface_or_for_gtp_based_control_plane_interface.presence == 0) {
+            ogs_error("No S5C TEID");
+            cause_value = OGS_GTP2_CAUSE_CONDITIONAL_IE_MISSING;
+        }
+
     }
 
-    if (rsp->pdn_address_allocation.presence) {
-        ogs_paa_t paa;
+    if (create_action == OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST) {
 
-        memcpy(&paa, rsp->pdn_address_allocation.data,
-                rsp->pdn_address_allocation.len);
-
-        if (!OGS_PDU_SESSION_TYPE_IS_VALID(paa.session_type)) {
-            ogs_error("Unknown PDN Type[%u]", paa.session_type);
-            cause_value = OGS_GTP2_CAUSE_MANDATORY_IE_INCORRECT;
-        }
+        /* No need S5C TEID in PathSwitchRequest */
     } else {
-        ogs_error("No PDN Address Allocation");
-        cause_value = OGS_GTP2_CAUSE_CONDITIONAL_IE_MISSING;
+
+        if (rsp->pdn_address_allocation.presence) {
+            ogs_paa_t paa;
+
+            memcpy(&paa, rsp->pdn_address_allocation.data,
+                    rsp->pdn_address_allocation.len);
+
+            if (!OGS_PDU_SESSION_TYPE_IS_VALID(paa.session_type)) {
+                ogs_error("Unknown PDN Type[%u]", paa.session_type);
+                cause_value = OGS_GTP2_CAUSE_MANDATORY_IE_INCORRECT;
+            }
+        } else {
+            ogs_error("No PDN Address Allocation");
+            cause_value = OGS_GTP2_CAUSE_CONDITIONAL_IE_MISSING;
+        }
     }
 
     if (rsp->cause.presence == 0) {
@@ -289,11 +304,16 @@ void mme_s11_handle_create_session_response(
     sgw_ue->sgw_s11_teid = be32toh(sgw_s11_teid->teid);
 
     /* Control Plane(UL) : PGW-S5C */
-    pgw_s5c_teid = rsp->pgw_s5_s8__s2a_s2b_f_teid_for_pmip_based_interface_or_for_gtp_based_control_plane_interface.data;
-    sess->pgw_s5c_teid = be32toh(pgw_s5c_teid->teid);
+    if (rsp->pgw_s5_s8__s2a_s2b_f_teid_for_pmip_based_interface_or_for_gtp_based_control_plane_interface.presence) {
+        pgw_s5c_teid = rsp->pgw_s5_s8__s2a_s2b_f_teid_for_pmip_based_interface_or_for_gtp_based_control_plane_interface.data;
+        sess->pgw_s5c_teid = be32toh(pgw_s5c_teid->teid);
+    }
 
-    memcpy(&session->paa, rsp->pdn_address_allocation.data,
-            rsp->pdn_address_allocation.len);
+    /* PDN Addresss Allocation */
+    if (rsp->pdn_address_allocation.presence) {
+        memcpy(&session->paa, rsp->pdn_address_allocation.data,
+                rsp->pdn_address_allocation.len);
+    }
 
     /* PCO */
     if (rsp->protocol_configuration_options.presence) {

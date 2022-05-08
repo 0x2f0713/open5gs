@@ -382,6 +382,8 @@ void sgwc_sxa_handle_session_establishment_response(
                 sess->gnode, &send_message.h, pkbuf, sess_timeout, sess);
         ogs_expect_or_return(s5c_xact);
 
+        s5c_xact->modify_action = OGS_GTP_MODIFY_IN_PATH_SWITCH_REQUEST;
+
     } else {
 
         /* Create Session Request */

@@ -376,6 +376,7 @@ void sgwc_s5c_handle_modify_bearer_response(
     int rv;
     ogs_gtp2_cause_t *cause = NULL;
     uint8_t cause_value;
+    int modify_action;
 
     sgwc_ue_t *sgwc_ue = NULL;
     ogs_pkbuf_t *pkbuf = NULL;
@@ -395,6 +396,7 @@ void sgwc_s5c_handle_modify_bearer_response(
     ogs_assert(s5c_xact);
     s11_xact = s5c_xact->assoc_xact;
     ogs_assert(s11_xact);
+    modify_action = s5c_xact->modify_action;
 
     rv = ogs_gtp_xact_commit(s5c_xact);
     ogs_expect(rv == OGS_OK);
@@ -413,9 +415,14 @@ void sgwc_s5c_handle_modify_bearer_response(
     }
 
     if (cause_value != OGS_GTP2_CAUSE_REQUEST_ACCEPTED) {
-        ogs_gtp_send_error_message(
-                s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
-                OGS_GTP2_MODIFY_BEARER_RESPONSE_TYPE, cause_value);
+        if (modify_action == OGS_GTP_MODIFY_IN_PATH_SWITCH_REQUEST)
+            ogs_gtp_send_error_message(
+                    s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+                    OGS_GTP2_CREATE_SESSION_RESPONSE_TYPE, cause_value);
+        else
+            ogs_gtp_send_error_message(
+                    s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+                    OGS_GTP2_MODIFY_BEARER_RESPONSE_TYPE, cause_value);
         return;
     }
 
@@ -430,9 +437,14 @@ void sgwc_s5c_handle_modify_bearer_response(
     }
 
     if (cause_value != OGS_GTP2_CAUSE_REQUEST_ACCEPTED) {
-        ogs_gtp_send_error_message(
-                s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
-                OGS_GTP2_MODIFY_BEARER_RESPONSE_TYPE, cause_value);
+        if (modify_action == OGS_GTP_MODIFY_IN_PATH_SWITCH_REQUEST)
+            ogs_gtp_send_error_message(
+                    s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+                    OGS_GTP2_CREATE_SESSION_RESPONSE_TYPE, cause_value);
+        else
+            ogs_gtp_send_error_message(
+                    s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+                    OGS_GTP2_MODIFY_BEARER_RESPONSE_TYPE, cause_value);
         return;
     }
 
@@ -446,9 +458,14 @@ void sgwc_s5c_handle_modify_bearer_response(
     cause_value = cause->value;
     if (cause_value != OGS_GTP2_CAUSE_REQUEST_ACCEPTED) {
         ogs_error("GTP Failed [CAUSE:%d]", cause_value);
-        ogs_gtp_send_error_message(
-                s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
-                OGS_GTP2_MODIFY_BEARER_RESPONSE_TYPE, cause_value);
+        if (modify_action == OGS_GTP_MODIFY_IN_PATH_SWITCH_REQUEST)
+            ogs_gtp_send_error_message(
+                    s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+                    OGS_GTP2_CREATE_SESSION_RESPONSE_TYPE, cause_value);
+        else
+            ogs_gtp_send_error_message(
+                    s11_xact, sgwc_ue ? sgwc_ue->mme_s11_teid : 0,
+                    OGS_GTP2_MODIFY_BEARER_RESPONSE_TYPE, cause_value);
         return;
     }
 
@@ -463,17 +480,22 @@ void sgwc_s5c_handle_modify_bearer_response(
     ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
         sess->sgw_s5c_teid, sess->pgw_s5c_teid);
 
-    message->h.type = OGS_GTP2_MODIFY_BEARER_RESPONSE_TYPE;
-    message->h.teid = sgwc_ue->mme_s11_teid;
+    if (modify_action == OGS_GTP_MODIFY_IN_PATH_SWITCH_REQUEST) {
+        ogs_assert(OGS_OK ==
+            sgwc_gtp_send_create_session_response(sess, s11_xact));
+    } else {
+        message->h.type = OGS_GTP2_MODIFY_BEARER_RESPONSE_TYPE;
+        message->h.teid = sgwc_ue->mme_s11_teid;
 
-    pkbuf = ogs_gtp2_build_msg(message);
-    ogs_expect_or_return(pkbuf);
+        pkbuf = ogs_gtp2_build_msg(message);
+        ogs_expect_or_return(pkbuf);
 
-    rv = ogs_gtp_xact_update_tx(s11_xact, &message->h, pkbuf);
-    ogs_expect_or_return(rv == OGS_OK);
+        rv = ogs_gtp_xact_update_tx(s11_xact, &message->h, pkbuf);
+        ogs_expect_or_return(rv == OGS_OK);
 
-    rv = ogs_gtp_xact_commit(s11_xact);
-    ogs_expect(rv == OGS_OK);
+        rv = ogs_gtp_xact_commit(s11_xact);
+        ogs_expect(rv == OGS_OK);
+    }
 }
 
 void sgwc_s5c_handle_create_bearer_request(
