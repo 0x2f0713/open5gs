@@ -940,7 +940,7 @@ void smf_epc_n4_handle_session_modification_response(
 
     } else if (flags & OGS_PFCP_MODIFY_CREATE) {
         ogs_assert(bearer);
-        ogs_assert(OGS_OK == smf_gtp_send_create_bearer_request(bearer));
+        ogs_assert(OGS_OK == smf_gtp2_send_create_bearer_request(bearer));
 
     } else if (flags & OGS_PFCP_MODIFY_DEACTIVATE) {
         /*
@@ -1013,7 +1013,7 @@ void smf_epc_n4_handle_session_modification_response(
                 ogs_assert(linked_bearer);
 
                 ogs_assert(OGS_OK ==
-                    smf_gtp_send_delete_bearer_request(
+                    smf_gtp2_send_delete_bearer_request(
                         linked_bearer, gtp_pti, gtp_cause));
             } else {
         /*
@@ -1034,7 +1034,7 @@ void smf_epc_n4_handle_session_modification_response(
                 ogs_assert(bearer);
 
                 ogs_assert(OGS_OK ==
-                    smf_gtp_send_delete_bearer_request(
+                    smf_gtp2_send_delete_bearer_request(
                         bearer,
                         OGS_NAS_PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,
                         gtp_cause));

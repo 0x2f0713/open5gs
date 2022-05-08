@@ -356,9 +356,6 @@ void smf_s5c_handle_modify_bearer_request(
     uint8_t cause_value = 0;
     ogs_gtp2_indication_t *indication = NULL;
 
-    ogs_gtp2_header_t h;
-    ogs_pkbuf_t *pkbuf = NULL;
-
     smf_ue_t *smf_ue = NULL;
     smf_sess_t *wlan_sess = NULL;
 
@@ -431,18 +428,8 @@ void smf_s5c_handle_modify_bearer_request(
             bearer->sgw_s5u_teid, bearer->pgw_s5u_teid);
 #endif
 
-    memset(&h, 0, sizeof(ogs_gtp2_header_t));
-    h.type = OGS_GTP2_MODIFY_BEARER_RESPONSE_TYPE;
-    h.teid = sess->sgw_s5c_teid;
-
-    pkbuf = smf_s5c_build_modify_bearer_response(h.type, sess, req);
-    ogs_expect_or_return(pkbuf);
-
-    rv = ogs_gtp_xact_update_tx(xact, &h, pkbuf);
-    ogs_expect_or_return(rv == OGS_OK);
-
-    rv = ogs_gtp_xact_commit(xact);
-    ogs_expect(rv == OGS_OK);
+    ogs_assert(OGS_OK ==
+        smf_gtp2_send_modify_bearer_response(sess, xact, req));
 
     if (req->indication_flags.presence &&
         req->indication_flags.data && req->indication_flags.len) {

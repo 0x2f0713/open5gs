@@ -303,10 +303,14 @@ void smf_gsm_state_initial_wait_pfcp_establishment(ogs_fsm_t *s, smf_event_t *e)
                 }
                 switch (gtp_xact->gtp_version) {
                 case 1:
-                    ogs_assert(OGS_OK == smf_gtp1_send_create_pdp_context_response(sess, gtp_xact));
+                    ogs_assert(OGS_OK ==
+                            smf_gtp1_send_create_pdp_context_response(
+                                sess, gtp_xact));
                     break;
                 case 2:
-                    ogs_assert(OGS_OK == smf_gtp_send_create_session_response(sess, gtp_xact));
+                    ogs_assert(OGS_OK ==
+                            smf_gtp2_send_create_session_response(
+                                sess, gtp_xact));
                     break;
                 }
                 if (sess->gtp_rat_type == OGS_GTP2_RAT_TYPE_WLAN) {
@@ -994,7 +998,7 @@ test_can_proceed:
                     ogs_assert(OGS_OK == smf_gtp1_send_delete_pdp_context_response(sess, e->gtp_xact));
                     break;
                 case 2:
-                    ogs_assert(OGS_OK == smf_gtp_send_delete_session_response(sess, e->gtp_xact));
+                    ogs_assert(OGS_OK == smf_gtp2_send_delete_session_response(sess, e->gtp_xact));
                     break;
                 }
             } else {
