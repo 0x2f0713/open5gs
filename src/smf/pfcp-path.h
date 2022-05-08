@@ -29,6 +29,12 @@ extern "C" {
 int smf_pfcp_open(void);
 void smf_pfcp_close(void);
 
+int smf_pfcp_send_modify_list(
+        smf_sess_t *sess,
+        ogs_pkbuf_t *(*modify_list)(
+            uint8_t type, smf_sess_t *sess, ogs_pfcp_xact_t *xact),
+        ogs_pfcp_xact_t *xact, ogs_time_t duration);
+
 int smf_5gc_pfcp_send_session_establishment_request(
         smf_sess_t *sess, ogs_sbi_stream_t *stream);
 int smf_5gc_pfcp_send_session_modification_request(

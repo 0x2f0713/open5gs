@@ -499,7 +499,7 @@ void sgwc_s11_handle_modify_bearer_request(
         dl_tunnel->remote_teid, dl_tunnel->local_teid);
 
     ogs_list_for_each_entry(&pfcp_xact_list, pfcp_xact, tmpnode)
-        sgwc_pfcp_xact_commit(pfcp_xact);
+        sgwc_pfcp_send_bearer_to_modify_list(pfcp_xact->data, pfcp_xact);
 }
 
 void sgwc_s11_handle_delete_session_request(

@@ -294,6 +294,41 @@ static void bearer_epc_timeout(ogs_pfcp_xact_t *xact, void *data)
     }
 }
 
+int smf_pfcp_send_modify_list(
+        smf_sess_t *sess,
+        ogs_pkbuf_t *(*modify_list)(
+            uint8_t type, smf_sess_t *sess, ogs_pfcp_xact_t *xact),
+        ogs_pfcp_xact_t *xact, ogs_time_t duration)
+{
+    int rv;
+    ogs_pkbuf_t *n4buf = NULL;
+    ogs_pfcp_header_t h;
+
+    ogs_assert(sess);
+    ogs_assert(xact);
+
+    memset(&h, 0, sizeof(ogs_pfcp_header_t));
+    h.type = OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE;
+    h.seid = sess->upf_n4_seid;
+
+    n4buf = (*modify_list)(h.type, sess, xact);
+    ogs_expect_or_return_val(n4buf, OGS_ERROR);
+
+    rv = ogs_pfcp_xact_update_tx(xact, &h, n4buf);
+    ogs_expect_or_return_val(rv == OGS_OK, OGS_ERROR);
+
+    if (duration) {
+        ogs_pfcp_xact_delayed_commit(xact, duration);
+
+        return OGS_OK;
+    } else {
+        rv = ogs_pfcp_xact_commit(xact);
+        ogs_expect(rv == OGS_OK);
+
+        return rv;
+    }
+}
+
 int smf_5gc_pfcp_send_session_establishment_request(
         smf_sess_t *sess, ogs_sbi_stream_t *stream)
 {
@@ -331,8 +366,6 @@ int smf_5gc_pfcp_send_session_modification_request(
         uint64_t flags, ogs_time_t duration)
 {
     int rv;
-    ogs_pkbuf_t *n4buf = NULL;
-    ogs_pfcp_header_t h;
     ogs_pfcp_xact_t *xact = NULL;
     ogs_pfcp_pdr_t *pdr = NULL;
 
@@ -350,34 +383,17 @@ int smf_5gc_pfcp_send_session_modification_request(
     ogs_list_for_each(&sess->pfcp.pdr_list, pdr)
         ogs_list_add(&sess->pdr_to_modify_list, &pdr->to_modify_node);
 
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE;
-    h.seid = sess->upf_n4_seid;
+    rv = smf_pfcp_send_modify_list(
+            sess, smf_n4_build_pdr_to_modify_list, xact, duration);
+    ogs_expect(rv == OGS_OK);
 
-    n4buf = smf_n4_build_pdr_to_modify_list(h.type, sess, xact);
-    ogs_expect_or_return_val(n4buf, OGS_ERROR);
-
-    rv = ogs_pfcp_xact_update_tx(xact, &h, n4buf);
-    ogs_expect_or_return_val(rv == OGS_OK, OGS_ERROR);
-
-    if (duration) {
-        ogs_pfcp_xact_delayed_commit(xact, duration);
-
-        return OGS_OK;
-    } else {
-        rv = ogs_pfcp_xact_commit(xact);
-        ogs_expect(rv == OGS_OK);
-
-        return rv;
-    }
+    return rv;
 }
 
 int smf_5gc_pfcp_send_qos_flow_modification_request(smf_bearer_t *qos_flow,
         ogs_sbi_stream_t *stream, uint64_t flags)
 {
     int rv;
-    ogs_pkbuf_t *n4buf = NULL;
-    ogs_pfcp_header_t h;
     ogs_pfcp_xact_t *xact = NULL;
     smf_sess_t *sess = NULL;
 
@@ -395,17 +411,8 @@ int smf_5gc_pfcp_send_qos_flow_modification_request(smf_bearer_t *qos_flow,
     ogs_list_init(&sess->qos_flow_to_modify_list);
     ogs_list_add(&sess->qos_flow_to_modify_list, &qos_flow->to_modify_node);
 
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE;
-    h.seid = sess->upf_n4_seid;
-
-    n4buf = smf_n4_build_qos_flow_to_modify_list(h.type, sess, xact);
-    ogs_expect_or_return_val(n4buf, OGS_ERROR);
-
-    rv = ogs_pfcp_xact_update_tx(xact, &h, n4buf);
-    ogs_expect_or_return_val(rv == OGS_OK, OGS_ERROR);
-
-    rv = ogs_pfcp_xact_commit(xact);
+    rv = smf_pfcp_send_modify_list(
+            sess, smf_n4_build_qos_flow_to_modify_list, xact, 0);
     ogs_expect(rv == OGS_OK);
 
     return rv;
@@ -481,8 +488,6 @@ int smf_epc_pfcp_send_session_modification_request(
         uint64_t flags, uint8_t gtp_pti, uint8_t gtp_cause)
 {
     int rv;
-    ogs_pkbuf_t *n4buf = NULL;
-    ogs_pfcp_header_t h;
     ogs_pfcp_xact_t *xact = NULL;
     ogs_pfcp_pdr_t *pdr = NULL;
 
@@ -502,17 +507,8 @@ int smf_epc_pfcp_send_session_modification_request(
     ogs_list_for_each(&sess->pfcp.pdr_list, pdr)
         ogs_list_add(&sess->pdr_to_modify_list, &pdr->to_modify_node);
 
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE;
-    h.seid = sess->upf_n4_seid;
-
-    n4buf = smf_n4_build_pdr_to_modify_list(h.type, sess, xact);
-    ogs_expect_or_return_val(n4buf, OGS_ERROR);
-
-    rv = ogs_pfcp_xact_update_tx(xact, &h, n4buf);
-    ogs_expect_or_return_val(rv == OGS_OK, OGS_ERROR);
-
-    rv = ogs_pfcp_xact_commit(xact);
+    rv = smf_pfcp_send_modify_list(
+            sess, smf_n4_build_pdr_to_modify_list, xact, 0);
     ogs_expect(rv == OGS_OK);
 
     return rv;
@@ -523,8 +519,6 @@ int smf_epc_pfcp_send_bearer_modification_request(
         uint64_t flags, uint8_t gtp_pti, uint8_t gtp_cause)
 {
     int rv;
-    ogs_pkbuf_t *n4buf = NULL;
-    ogs_pfcp_header_t h;
     ogs_pfcp_xact_t *xact = NULL;
     smf_sess_t *sess = NULL;
 
@@ -546,17 +540,8 @@ int smf_epc_pfcp_send_bearer_modification_request(
     ogs_list_init(&sess->qos_flow_to_modify_list);
     ogs_list_add(&sess->qos_flow_to_modify_list, &bearer->to_modify_node);
 
-    memset(&h, 0, sizeof(ogs_pfcp_header_t));
-    h.type = OGS_PFCP_SESSION_MODIFICATION_REQUEST_TYPE;
-    h.seid = sess->upf_n4_seid;
-
-    n4buf = smf_n4_build_qos_flow_to_modify_list(h.type, sess, xact);
-    ogs_expect_or_return_val(n4buf, OGS_ERROR);
-
-    rv = ogs_pfcp_xact_update_tx(xact, &h, n4buf);
-    ogs_expect_or_return_val(rv == OGS_OK, OGS_ERROR);
-
-    rv = ogs_pfcp_xact_commit(xact);
+    rv = smf_pfcp_send_modify_list(
+            sess, smf_n4_build_qos_flow_to_modify_list, xact, 0);
     ogs_expect(rv == OGS_OK);
 
     return rv;
