@@ -373,6 +373,7 @@ void mme_s11_handle_create_session_response(
     } else if (create_action == OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST) {
 
         GTP_COUNTER_CHECK(mme_ue, GTP_COUNTER_CREATE_SESSION_BY_PATH_SWITCH,
+            sgw_ue_associate_mme_ue(sgw_ue, mme_ue);
             ogs_assert(OGS_OK == s1ap_send_path_switch_ack(mme_ue, true));
         );
 
