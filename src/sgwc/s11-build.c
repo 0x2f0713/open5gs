@@ -22,10 +22,9 @@
 ogs_pkbuf_t *sgwc_s11_build_create_session_response(
         uint8_t type, sgwc_sess_t *sess)
 {
-    int rv;
-#if 0
+    int rv, i;
     sgwc_bearer_t *bearer = NULL;
-#endif
+    sgwc_tunnel_t *ul_tunnel = NULL;
     sgwc_ue_t *sgwc_ue = NULL;
 
     ogs_gtp2_message_t gtp_message;
@@ -35,12 +34,12 @@ ogs_pkbuf_t *sgwc_s11_build_create_session_response(
 
     ogs_gtp2_f_teid_t sgw_s11_teid;
     int len;
-#if 0
-    int i;
+
     ogs_gtp2_cause_t bearer_cause[OGS_BEARER_PER_UE];
+    ogs_gtp2_f_teid_t sgw_s1u_teid[OGS_BEARER_PER_UE];
+    int sgw_s1u_len[OGS_BEARER_PER_UE];
     ogs_gtp2_f_teid_t pgw_s5u_teid[OGS_BEARER_PER_UE];
     int pgw_s5u_len[OGS_BEARER_PER_UE];
-#endif
 
     ogs_debug("[SGWC] Create Session Response");
 
@@ -48,10 +47,8 @@ ogs_pkbuf_t *sgwc_s11_build_create_session_response(
     sgwc_ue = sess->sgwc_ue;
     ogs_assert(sgwc_ue);
 
-#if 0
-    ogs_debug("    SGW_S5C_TEID[0x%x] SMF_N4_TEID[0x%x]",
-            sess->sgw_s5c_teid, sess->sgwc_n4_teid);
-#endif
+    ogs_debug("    SGW_S5C_TEID[0x%x] PGW_S5C_TEID[0x%x]",
+            sess->sgw_s5c_teid, sess->pgw_s5c_teid);
 
     rsp = &gtp_message.create_session_response;
     memset(&gtp_message, 0, sizeof(ogs_gtp2_message_t));
@@ -76,13 +73,9 @@ ogs_pkbuf_t *sgwc_s11_build_create_session_response(
     rsp->sender_f_teid_for_control_plane.data = &sgw_s11_teid;
     rsp->sender_f_teid_for_control_plane.len = len;
 
-#if 0
     i = 0;
     ogs_list_for_each(&sess->bearer_list, bearer) {
         ogs_assert(i < OGS_BEARER_PER_UE);
-
-        ogs_debug("    SGW_S5U_TEID[0x%x] PGW_S5U_TEID[0x%x]",
-                bearer->sgw_s5u_teid, bearer->pgw_s5u_teid);
 
         /* Bearer EBI */
         rsp->bearer_contexts_created[i].presence = 1;
@@ -96,6 +89,42 @@ ogs_pkbuf_t *sgwc_s11_build_create_session_response(
         rsp->bearer_contexts_created[i].cause.data = &bearer_cause[i];
         bearer_cause[i].value = OGS_GTP2_CAUSE_REQUEST_ACCEPTED;
 
+        /* Data Plane(UL) */
+        ul_tunnel = sgwc_ul_tunnel_in_bearer(bearer);
+        ogs_assert(ul_tunnel);
+
+        ogs_debug("    SGW_S1U_TEID[0x%x] PGW_S5U_TEID[0x%x]",
+                ul_tunnel->local_teid, ul_tunnel->remote_teid);
+
+        /* Data Plane(UL) : SGW-S1U */
+        memset(&sgw_s1u_teid[i], 0, sizeof(ogs_gtp2_f_teid_t));
+        sgw_s1u_teid[i].interface_type = ul_tunnel->interface_type;
+        sgw_s1u_teid[i].teid = htobe32(ul_tunnel->local_teid);
+        ogs_assert(ul_tunnel->local_addr || ul_tunnel->local_addr6);
+        rv = ogs_gtp2_sockaddr_to_f_teid(
+            ul_tunnel->local_addr, ul_tunnel->local_addr6,
+            &sgw_s1u_teid[i], &sgw_s1u_len[i]);
+        ogs_assert(rv == OGS_OK);
+        rsp->bearer_contexts_created[i].s1_u_enodeb_f_teid.presence = 1;
+        rsp->bearer_contexts_created[i].s1_u_enodeb_f_teid.data =
+            &sgw_s1u_teid[i];
+        rsp->bearer_contexts_created[i].s1_u_enodeb_f_teid.len =
+            sgw_s1u_len[i];
+
+        /* Data Plane(UL) : PGW-S5U */
+        memset(&pgw_s5u_teid[i], 0, sizeof(ogs_gtp2_f_teid_t));
+        pgw_s5u_teid[i].interface_type = OGS_GTP2_F_TEID_S5_S8_PGW_GTP_U;
+        pgw_s5u_teid[i].teid = htobe32(ul_tunnel->remote_teid);
+        rv = ogs_gtp2_ip_to_f_teid(&ul_tunnel->remote_ip,
+                &pgw_s5u_teid[i], &pgw_s5u_len[i]);
+        ogs_assert(rv == OGS_OK);
+        rsp->bearer_contexts_created[i].s5_s8_u_sgw_f_teid.presence = 1;
+        rsp->bearer_contexts_created[i].s5_s8_u_sgw_f_teid.data =
+            &pgw_s5u_teid[i];
+        rsp->bearer_contexts_created[i].s5_s8_u_sgw_f_teid.len =
+            pgw_s5u_len[i];
+
+#if 0
         /* Bearer QoS
          * if PCRF changes Bearer QoS, this should be included. */
         if (sess->gtp.create_session_response_bearer_qos == true) {
@@ -116,7 +145,9 @@ ogs_pkbuf_t *sgwc_s11_build_create_session_response(
         /* Bearer Charging ID */
         rsp->bearer_contexts_created[i].charging_id.presence = 1;
         rsp->bearer_contexts_created[i].charging_id.u32 = sess->charging.id;
+#endif
 
+#if 0
         /* Data Plane(UL) : SMF-S5U */
         memset(&pgw_s5u_teid[i], 0, sizeof(ogs_gtp2_f_teid_t));
         pgw_s5u_teid[i].teid = htobe32(bearer->pgw_s5u_teid);
@@ -147,10 +178,10 @@ ogs_pkbuf_t *sgwc_s11_build_create_session_response(
             ogs_error("Unknown RAT Type [%d]", sess->gtp_rat_type);
             ogs_assert_if_reached();
         }
+#endif
 
         i++;
     }
-#endif
 
     gtp_message.h.type = type;
     return ogs_gtp2_build_msg(&gtp_message);
