@@ -638,6 +638,8 @@ typedef struct mme_bearer_s {
     ogs_ip_t        enb_s1u_ip;
     uint32_t        sgw_s1u_teid;
     ogs_ip_t        sgw_s1u_ip;
+    uint32_t        pgw_s5u_teid;
+    ogs_ip_t        pgw_s5u_ip;
 
     uint32_t        target_s1u_teid;    /* Target S1U TEID from HO-Req-Ack */
     ogs_ip_t        target_s1u_ip;      /* Target S1U ADDR from HO-Req-Ack */

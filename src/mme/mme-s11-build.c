@@ -39,6 +39,8 @@ ogs_pkbuf_t *mme_s11_build_create_session_request(
     int len;
     ogs_gtp2_f_teid_t enb_s1u_teid[OGS_BEARER_PER_UE];
     int enb_s1u_len[OGS_BEARER_PER_UE];
+    ogs_gtp2_f_teid_t pgw_s5u_teid[OGS_BEARER_PER_UE];
+    int pgw_s5u_len[OGS_BEARER_PER_UE];
     ogs_gtp2_ambr_t ambr;
     ogs_gtp2_bearer_qos_t bearer_qos;
     char bearer_qos_buf[OGS_BEARER_PER_UE][GTP2_BEARER_QOS_LEN];
@@ -267,6 +269,7 @@ ogs_pkbuf_t *mme_s11_build_create_session_request(
         req->bearer_contexts_to_be_created[i].eps_bearer_id.u8 = bearer->ebi;
 
         if (create_action == OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST) {
+
             /* Data Plane(DL) : ENB-S1U */
             memset(&enb_s1u_teid[i], 0, sizeof(ogs_gtp2_f_teid_t));
             enb_s1u_teid[i].interface_type = OGS_GTP2_F_TEID_S1_U_ENODEB_GTP_U;
@@ -279,6 +282,19 @@ ogs_pkbuf_t *mme_s11_build_create_session_request(
                 &enb_s1u_teid[i];
             req->bearer_contexts_to_be_created[i].s1_u_enodeb_f_teid.len =
                 enb_s1u_len[i];
+
+            /* Data Plane(DL) : PGW-S5U */
+            memset(&pgw_s5u_teid[i], 0, sizeof(ogs_gtp2_f_teid_t));
+            pgw_s5u_teid[i].interface_type = OGS_GTP2_F_TEID_S5_S8_PGW_GTP_U;
+            pgw_s5u_teid[i].teid = htobe32(bearer->pgw_s5u_teid);
+            ogs_assert(OGS_OK == ogs_gtp2_ip_to_f_teid(
+                &bearer->pgw_s5u_ip, &pgw_s5u_teid[i], &pgw_s5u_len[i]));
+            req->bearer_contexts_to_be_created[i].s5_s8_u_sgw_f_teid.
+                presence = 1;
+            req->bearer_contexts_to_be_created[i].s5_s8_u_sgw_f_teid.data =
+                &pgw_s5u_teid[i];
+            req->bearer_contexts_to_be_created[i].s5_s8_u_sgw_f_teid.len =
+                pgw_s5u_len[i];
         }
 
         memset(&bearer_qos, 0, sizeof(bearer_qos));

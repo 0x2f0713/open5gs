@@ -86,6 +86,7 @@ void mme_s11_handle_create_session_response(
     ogs_gtp2_f_teid_t *sgw_s11_teid = NULL;
     ogs_gtp2_f_teid_t *pgw_s5c_teid = NULL;
     ogs_gtp2_f_teid_t *sgw_s1u_teid = NULL;
+    ogs_gtp2_f_teid_t *pgw_s5u_teid = NULL;
 
     mme_bearer_t *bearer = NULL;
     mme_sess_t *sess = NULL;
@@ -159,6 +160,7 @@ void mme_s11_handle_create_session_response(
     if (create_action == OGS_GTP_CREATE_IN_PATH_SWITCH_REQUEST) {
 
         /* No need S5C TEID in PathSwitchRequest */
+
     } else {
 
         if (rsp->pdn_address_allocation.presence) {
@@ -258,7 +260,11 @@ void mme_s11_handle_create_session_response(
             break;
         }
         if (rsp->bearer_contexts_created[i].s1_u_enodeb_f_teid.presence == 0) {
-            ogs_error("No GTP TEID");
+            ogs_error("No SGW-S1U TEID");
+            break;
+        }
+        if (rsp->bearer_contexts_created[i].s5_s8_u_sgw_f_teid.presence == 0) {
+            ogs_error("No PGW-S5U TEID");
             break;
         }
 
@@ -274,15 +280,18 @@ void mme_s11_handle_create_session_response(
         sgw_s1u_teid = rsp->bearer_contexts_created[i].s1_u_enodeb_f_teid.data;
         bearer->sgw_s1u_teid = be32toh(sgw_s1u_teid->teid);
 
-        ogs_debug("    ENB_S1U_TEID[%d] SGW_S1U_TEID[%d]",
-                bearer->enb_s1u_teid, bearer->sgw_s1u_teid);
+        ogs_assert(OGS_OK ==
+                ogs_gtp2_f_teid_to_ip(sgw_s1u_teid, &bearer->sgw_s1u_ip));
 
-        rv = ogs_gtp2_f_teid_to_ip(sgw_s1u_teid, &bearer->sgw_s1u_ip);
-        if (rv != OGS_OK) {
-            mme_send_delete_session_or_mme_ue_context_release(mme_ue);
-            return;
-        }
+        /* Data Plane(UL) : PGW-S5U */
+        pgw_s5u_teid = rsp->bearer_contexts_created[i].s5_s8_u_sgw_f_teid.data;
+        bearer->pgw_s5u_teid = be32toh(pgw_s5u_teid->teid);
 
+        ogs_assert(OGS_OK ==
+                ogs_gtp2_f_teid_to_ip(pgw_s5u_teid, &bearer->pgw_s5u_ip));
+
+        ogs_debug("    ENB_S1U_TEID[%d] SGW_S1U_TEID[%d] PGW_S5U_TEID[%d]",
+            bearer->enb_s1u_teid, bearer->sgw_s1u_teid, bearer->pgw_s5u_teid);
     }
 
     /* Bearer Level QoS */
