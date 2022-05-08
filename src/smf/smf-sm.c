@@ -197,13 +197,8 @@ void smf_state_operational(ogs_fsm_t *s, smf_event_t *e)
             sess = smf_sess_find_by_teid(gtp1_message.h.teid);
         }
 
-        if (sess) {
-            gnode = sess->gnode;
-            ogs_assert(gnode);
-        } else {
-            gnode = e->gnode;
-            ogs_assert(gnode);
-        }
+        gnode = e->gnode;
+        ogs_assert(gnode);
 
         rv = ogs_gtp1_xact_receive(gnode, &gtp1_message.h, &gtp_xact);
         if (rv != OGS_OK) {
