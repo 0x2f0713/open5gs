@@ -318,6 +318,7 @@ static connection_t *connection_add(
                     CURLOPT_POSTFIELDS, conn->content);
             curl_easy_setopt(conn->easy,
                 CURLOPT_POSTFIELDSIZE, request->http.content_length);
+            curl_easy_setopt(conn->easy, CURLOPT_NOPROXY, "*");
 #if 1 /* Disable HTTP/1.1 100 Continue : Use "Expect:" in libcurl */
             conn->header_list = curl_slist_append(
                     conn->header_list, "Expect:");
@@ -351,6 +352,7 @@ static connection_t *connection_add(
     curl_easy_setopt(conn->easy, CURLOPT_HEADERFUNCTION, header_cb);
     curl_easy_setopt(conn->easy, CURLOPT_HEADERDATA, conn);
     curl_easy_setopt(conn->easy, CURLOPT_ERRORBUFFER, conn->error);
+    curl_easy_setopt(conn->easy, CURLOPT_NOPROXY, "*");
 
     ogs_assert(client->multi);
     rc = curl_multi_add_handle(client->multi, conn->easy);

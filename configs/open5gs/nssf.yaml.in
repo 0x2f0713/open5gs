@@ -143,6 +143,8 @@ nssf:
         port: 7777
         s_nssai:
           sst: 1
+          sd: 000001
+
 
 #
 # nrf:
@@ -174,7 +176,6 @@ nrf:
     sbi:
       - addr:
           - 127.0.0.10
-          - ::1
         port: 7777
 
 #
@@ -190,6 +191,7 @@ nrf:
 #      prefer_ipv4: true
 #
 parameter:
+  no_ipv6: true
 
 #
 # max:

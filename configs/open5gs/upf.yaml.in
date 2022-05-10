@@ -171,7 +171,8 @@ upf:
       - addr: 127.0.0.7
     subnet:
       - addr: 10.45.0.1/16
-      - addr: 2001:db8:cafe::1/48
+        dnn: internet
+        dev: ogstun1
 
 #
 # smf:
@@ -201,6 +202,7 @@ smf:
 #      prefer_ipv4: true
 #
 parameter:
+  no_ipv6: true
 
 #
 # max:

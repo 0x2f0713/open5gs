@@ -127,6 +127,7 @@ sgwc:
 #      prefer_ipv4: true
 #
 parameter:
+  no_ipv6: true
 
 #
 # max:

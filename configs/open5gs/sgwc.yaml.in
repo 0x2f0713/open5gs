@@ -138,6 +138,7 @@ sgwu:
 #      no_pfcp_rr_select: true
 #
 parameter:
+  no_ipv6: true
 
 #
 # max:

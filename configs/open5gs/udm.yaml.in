@@ -132,7 +132,6 @@ nrf:
     sbi:
       - addr:
           - 127.0.0.10
-          - ::1
         port: 7777
 
 #
@@ -148,6 +147,7 @@ nrf:
 #      prefer_ipv4: true
 #
 parameter:
+  no_ipv6: true
 
 #
 # max:

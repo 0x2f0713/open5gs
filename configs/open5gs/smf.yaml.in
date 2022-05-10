@@ -391,12 +391,15 @@ smf:
       - addr: ::1
     subnet:
       - addr: 10.45.0.1/16
-      - addr: 2001:db8:cafe::1/48
+    info:
+      - s_nssai:
+          - sst: 1
+            sd: 000001
+            dnn:
+              - internet
     dns:
       - 8.8.8.8
       - 8.8.4.4
-      - 2001:4860:4860::8888
-      - 2001:4860:4860::8844
     mtu: 1400
     ctf:
       enabled: auto
@@ -444,7 +447,6 @@ nrf:
     sbi:
       - addr:
           - 127.0.0.10
-          - ::1
         port: 7777
 
 #
@@ -523,6 +525,7 @@ upf:
 #      no_ipv4v6_local_addr_in_packet_filter: true
 #
 parameter:
+  no_ipv6: true
 
 #
 # max:
